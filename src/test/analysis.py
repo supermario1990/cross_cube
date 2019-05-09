@@ -130,8 +130,8 @@ def AnalysisRelationship(fact_tb, relationship):
     return json_str
 
 
-# demo product, webshop
-for instance in session.query(Cubes).filter(Cubes.name == 'product'):
+# demo product, webshop, dates
+for instance in session.query(Cubes).filter(Cubes.name == 'dates'):
     print(instance.name)
 
 # 获取立方体维度和度量
@@ -195,27 +195,37 @@ for instance in session.query(Datasource).filter(Datasource.id == datasource_id)
 """
 
 # 条件
+total_dims = json.loads(instance.total_dims)
+total_measures = json.loads(instance.total_measures)
 print(dims)
 print(measures)
 
-condition_dims_str = ",".join(dims['dimensions'])
+condition_dims_group_by = ",".join(dims['dimensions'])
 
 conditions = []
-conditions.append(condition_dims_str)
-for i in measures['aggregates']:
-    func = i['function']
-    tmp = '('+func + '('+i['measure']+')'+')'
-    for m in measures['measures']:
-        if m['name'] == i['measure']:
-            tmp = tmp + ' as ' + m['label'] # measures 中的label作为别名
 
-    conditions.append(tmp)
+for d in dims['dimensions']:
+    for total_dim in total_dims['dimensions']:
+        if d == total_dim['name'] and total_dim['label']:
+            dim_str = d + " as " + total_dim['label']
+            conditions.append(dim_str)
+
+for m in measures['measures']:
+    for aggregate in total_measures['aggregates']:
+        if m == aggregate['measure']:
+            func = aggregate['function']
+            tmp = '('+func + '('+aggregate['measure']+')'+')'
+            for total_m in total_measures['measures']:
+                if total_m['name'] == m and total_m['label']:
+                    tmp = tmp + ' as ' + total_m['label'] # measures 中的label作为别名
+
+        conditions.append(tmp)
 
 print(conditions)
 
 condition_str = ",".join(conditions)
 
-sql = 'select ' + condition_str + " from " + source + " group by " + condition_dims_str
+sql = 'select ' + condition_str + " from " + source + " group by " + condition_dims_group_by
 print(sql)
 
 

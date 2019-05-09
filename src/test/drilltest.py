@@ -6,8 +6,8 @@ if not drill.is_active():
     raise ImproperlyConfigured('Please run Drill first')
 
 yelp_reviews = drill.query('''
-  SELECT COLUMN_NAME, DATA_TYPE  FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'products' AND TABLE_SCHEMA = 'mysql_250.main'
+  select id as ID,(sum(date_day)) as DAY from mysql_250.main.dates group by id
 ''')
 
-for result in yelp_reviews:
+for result in yelp_reviews.rows:
     print(result)

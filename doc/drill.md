@@ -1,8 +1,8 @@
 # drill
 
-## 使用指南
+## drill使用指南
 
-## 问题
+## drill问题
 
 1. 有的指令执行非常慢
 
@@ -18,3 +18,7 @@ ORDER BY TABLE_NAME DESC;
 
 查了1181条数据，用时997秒
 
+## pydrill
+
+1. pydrill 使用 drill.query 时，sql最后不能带分号，否者报错
+2. 
