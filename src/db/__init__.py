@@ -2,4 +2,3 @@
 # -*- coding: utf-8 -*-
 
 from .model import *
-from .model_utils import *
