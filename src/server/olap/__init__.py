@@ -24,5 +24,6 @@ def process_common_parameters():
 
 try:
     from .datasource import *
+    from .routes import *
 except Exception as exception:
     print(exception)

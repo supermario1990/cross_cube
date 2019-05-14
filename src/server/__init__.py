@@ -11,6 +11,10 @@ migrate = Migrate()
 mail = Mail()
 db = SQLAlchemy()
 
+version = {"major": 0, "minor":0, "patch":1}
+
+def get_version():
+    return '.'.join(map(str, version.values()))
 
 def create_app(config_name):
     """
