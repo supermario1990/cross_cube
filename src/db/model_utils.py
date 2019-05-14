@@ -4,7 +4,7 @@ from pydrill.client import PyDrill
 import json
 from src.db.model import *
 
-engine = create_engine("mysql+pymysql://root:root@192.168.7.250:3306/bi")
+engine = create_engine("mysql+pymysql://root:root@192.168.7.250:3306/kros")
 #Session = sessionmaker(engine)
 #session = Session()
 
@@ -74,23 +74,34 @@ def Select_Datasource_By_ID(id):
         rs['modi_time'] = instance.modi_time
         return rs
 
+def Select_Datasource_By_Name(name):
+    with getSession() as session:
+        instance = session.query(Datasource).filter(Datasource.name == name).one()
+        rs = {}
+        rs['id'] = instance.id
+        rs['name'] = instance.name
+        rs['type'] = instance.type
+        rs['config'] = instance.config
+        rs['test_sql'] = instance.test_sql
+        rs['modi_time'] = instance.modi_time
+        return rs
+
 
 # 功能：根据表名查询所属数据源、数据库、物理数据库
 # 入参：逻辑表名
 # 返回：数据模型ID，数据源名.数据库名.物理数据库
 def GetDbName(logic_tb_name):
-    with getSession() as session:
-        logic_rs = Select_Logictb_by_name(logic_tb_name)
-        id = logic_rs['id']
-        datasource_id = logic_rs['datasource_id']
-        physical_tb = logic_rs['physical_tb']
+    logic_rs = Select_Logictb_by_name(logic_tb_name)
+    id = logic_rs['id']
+    datasource_id = logic_rs['datasource_id']
+    physical_tb = logic_rs['physical_tb']
 
-        ds_rs = Select_Datasource_By_ID(datasource_id)
-        source_name = ds_rs['name']
-        config = json.loads(ds_rs['config'])
-        db_name = config['db_name']
+    ds_rs = Select_Datasource_By_ID(datasource_id)
+    source_name = ds_rs['name']
+    config = json.loads(ds_rs['config'])
+    db_name = config['db_name']
 
-        return id, source_name + "." + db_name + "." + physical_tb
+    return id, source_name + "." + db_name + "." + physical_tb
 
 
 if __name__ == '__main__':

@@ -1,0 +1,55 @@
+{
+  "uuid": "3ec0147d-47c9-5e5d-382e-bfb6ae1414a9",
+  "last_modified": 1552969573435,
+  "version": "2.6.1.0",
+  "name": "sales_model",
+  "description": "销售信息模型",
+  "fact_table": "mysql_250.sales",
+  "alias": "t_0",
+  "lookups": [
+    {
+      "index": 1,
+      "table": "mysql_250.dates",
+      "kind": "LOOKUP",
+      "alias": "t_1",
+      "join": {
+        "type": "inner",
+        "primary_key": "t_1.id",
+        "foreign_key": "t_0.date_id"
+      }
+    }
+  ],
+  "dimensions": [
+    {
+      "table": "t_0",
+      "columns": [
+        {"name":"id", "alias": "id"},
+        {"name": "date_id", "alias": "date_id"},
+        {"name": "customer_id", "alias": "customer_id"},
+        {"name": "product_id", "alias": "product_id"},
+        {"name": "country_id", "alias": "country_id"}
+      ]
+    },
+    {
+      "table": "t_1",
+      "columns": [
+        {"name": "id", "alias": "id"},
+        {"name": "date_year", "alias": "year"},
+        {"name": "date_quarter", "alias": "quarter"},
+        {"name": "date_month", "alias": "month"},
+        {"name": "date_day", "alias": "day"},
+        {"name": "date_week", "alias": "week"}
+      ]
+    }
+  ],
+  "measuers": [
+    {
+      "table": "t_0",
+      "columns": [
+        {"name": "quantity", "alias": "quantity", "func": "sum"},
+        {"name": "price_total", "alias": "price_total", "func": "sum"},
+        {"name": "test", "alias": "test", "func": "sum"}
+      ]
+    }
+  ]
+}
