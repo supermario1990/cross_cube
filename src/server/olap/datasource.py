@@ -1,11 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+from ..decorator import log_request
 from . import olap
+from db import *
+from utils import formatted_response
 
 
 @olap.route('/datasource', methods=['GET'])
+@log_request
 def GetAllDatasourceList():
-    pass
+    return formatted_response(Query_Datasource())
 
 
 @olap.route('/datasource/{datasource_id}', methods=['GET'])

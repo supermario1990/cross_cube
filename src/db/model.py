@@ -49,8 +49,8 @@ class DataSet(ModelBase):
                        ForeignKey('cubes.id', ondelete='CASCADE'),
                        comment='关联立方体UUID')
     create_time = Column(TIMESTAMP,
-                       default=datetime.datetime.now(),
-                       comment='创建数据集时间')
+                         default=datetime.datetime.now(),
+                         comment='创建数据集时间')
 
     def __repr__(self):
         return '<DataSet id: {} name: {} cube_uuid: {}>'.format(self.id, self.name, self.cube_uuid)
@@ -71,8 +71,8 @@ class Cubes(ModelBase):
     cube = Column(BLOB, comment='立方体信息')
     extends = Column(BLOB, comment='立方体扩展信息')
     create_time = Column(TIMESTAMP,
-                       default=datetime.datetime.now(),
-                       comment='创建立方体时间')
+                         default=datetime.datetime.now(),
+                         comment='创建立方体时间')
 
     def __repr__(self):
         return '<Cubes Name: {} Alias: {} Cube: {} Extends: {}>'.format(self.name, self.name_alias, self.cube, self.extends)
@@ -114,8 +114,27 @@ def Query_Datasource():
     '''
     try:
         with GetSession() as session:
-            return session.query(Datasource).order_by(Datasource.modi_time).all()
+            array_db = session.query(Datasource).order_by(
+                Datasource.modi_time).all()
+
+            print(type(array_db))
+            a = [1, 2, 3]
+            print(json.dumps(a))
+            print(json.dumps(array_db))
+
+            rs = []
+            for db in array_db:
+                item = {}
+                item['id'] = db.id
+                item['name'] = db.name
+                item['type'] = db.type
+                item['config'] = db.config
+                item['test_sql'] = db.test_sql
+                item['modi_time'] = db.modi_time
+                rs.append(item)
+            return rs
     except Exception as exception:
+        print(exception)
         return None
 
 
@@ -145,7 +164,7 @@ def Select_Datasource_By_ID(id):
     return rs
 
 
-def Insert_Datasource(name, type, config, test_sql):
+def Insert_Datasource(name, type, config, test_sql=""):
     '''
     @description: 插入新的数据源配置
     @param {name} {type} {config} {test_sql}
@@ -303,10 +322,10 @@ def Insert_Cube(name, name_alias, cube=None, extends=None):
     try:
         with GetSession() as session:
             New_Cube = Cubes(
-                name = name,
-                name_alias = name_alias,
-                cube = cube,
-                extends = extends)
+                name=name,
+                name_alias=name_alias,
+                cube=cube,
+                extends=extends)
             session.add(New_Cube)
             session.commit()
             return New_Cube.id
@@ -335,8 +354,8 @@ def Delete_Cube_By_ID(id):
 
 
 if __name__ == '__main__':
-    ModelBase.metadata.drop_all(engine)
-    ModelBase.metadata.create_all(engine)
+    # ModelBase.metadata.drop_all(engine)
+    # ModelBase.metadata.create_all(engine)
     id = Insert_Datasource('Mysql-250',
                            'mysql',
                            "{\"ip\":\"192.168.7.250\",\"port\":3306,\"user\":\"root\",\"password\":\"root\"}",
@@ -350,11 +369,13 @@ if __name__ == '__main__':
     print(Delete_Datasource_By_ID(id))
     print(Select_Datasource_By_ID(id))
 
-    # 外键异常 删除数据集之前，必须先插入立方体
+    # 外键异常 插入数据集之前，必须先插入立方体
     dataset_id0 = Insert_Dataset('Sales', "0")
-    
-    cube_id0 = Insert_Cube("test-cube", "测试立方体0", "{}".encode(encoding='utf-8'), "{}".encode(encoding='utf-8'))
-    cube_id1 = Insert_Cube("test-cube", "测试立方体1", "{}".encode(encoding='utf-8'), "{}".encode(encoding='utf-8'))
+
+    cube_id0 = Insert_Cube(
+        "test-cube", "测试立方体0", "{}".encode(encoding='utf-8'), "{}".encode(encoding='utf-8'))
+    cube_id1 = Insert_Cube(
+        "test-cube", "测试立方体1", "{}".encode(encoding='utf-8'), "{}".encode(encoding='utf-8'))
 
     print(Query_Cubes())
     print(Select_Cube_By_ID(cube_id1))

@@ -7,6 +7,8 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class Config:
     CONFIG_FILENAME = 'config.ini'
+    JSON_RECORD_LIMIT = 1000
+    PRETTY_PRINT = 4
     SECRET_KEY = os.environ.get(
         'SECRET_KEY') or 'Z3kDutZBDBa84hHzsofFqT8GPM78LOfZpYgMbAWyKDxFKqX5kBBG5k2Lf7KvzgOx07yLSA9mnPweWz+pZqQ7VQ=='
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True

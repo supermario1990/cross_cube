@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from flask import Response, request, g
 import os
 import base64
 from types import FunctionType
+from .formatters import JSONEncoder
 
 
 def get_work_path():
@@ -26,7 +28,7 @@ def dir_path(path, callback):
                 callback(path, file)
 
 
-def GenerateSecretKey(key_len=48):
+def generate_secretkey(key_len=48):
     return base64.b64encode(os.urandom(key_len)).decode()
 
 
@@ -42,3 +44,20 @@ def str_to_bool(string):
             return False
 
     return None
+
+
+def formatted_response(response):
+    """
+    返回`application/json, 转换对象到JSON。
+    """
+
+    if g.prettyprint:
+        indent = 4
+    else:
+        indent = None
+
+    encoder = JSONEncoder(indent=indent)
+    encoder.iterator_limit = g.json_record_limit
+    data = encoder.iterencode(response)
+    print(type(response))
+    return Response(data, mimetype='application/json')
