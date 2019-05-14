@@ -59,5 +59,5 @@ def formatted_response(response):
     encoder = JSONEncoder(indent=indent)
     encoder.iterator_limit = g.json_record_limit
     data = encoder.iterencode(response)
-    print(type(response))
+
     return Response(data, mimetype='application/json')

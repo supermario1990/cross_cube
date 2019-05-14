@@ -30,6 +30,9 @@ class Datasource(ModelBase):
                        default=datetime.datetime.now(),
                        comment='更新数据源配置时间')
 
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
     def __repr__(self):
         return '<Datasource id: {} name: {} type: {} config: {} test_sql: {}>'.format(self.id, self.name, self.type, self.config, self.test_sql)
 
@@ -52,6 +55,9 @@ class DataSet(ModelBase):
                          default=datetime.datetime.now(),
                          comment='创建数据集时间')
 
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
     def __repr__(self):
         return '<DataSet id: {} name: {} cube_uuid: {}>'.format(self.id, self.name, self.cube_uuid)
 
@@ -73,6 +79,9 @@ class Cubes(ModelBase):
     create_time = Column(TIMESTAMP,
                          default=datetime.datetime.now(),
                          comment='创建立方体时间')
+
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
     def __repr__(self):
         return '<Cubes Name: {} Alias: {} Cube: {} Extends: {}>'.format(self.name, self.name_alias, self.cube, self.extends)
@@ -114,25 +123,7 @@ def Query_Datasource():
     '''
     try:
         with GetSession() as session:
-            array_db = session.query(Datasource).order_by(
-                Datasource.modi_time).all()
-
-            print(type(array_db))
-            a = [1, 2, 3]
-            print(json.dumps(a))
-            print(json.dumps(array_db))
-
-            rs = []
-            for db in array_db:
-                item = {}
-                item['id'] = db.id
-                item['name'] = db.name
-                item['type'] = db.type
-                item['config'] = db.config
-                item['test_sql'] = db.test_sql
-                item['modi_time'] = db.modi_time
-                rs.append(item)
-            return rs
+            return session.query(Datasource).order_by(Datasource.modi_time).all()
     except Exception as exception:
         print(exception)
         return None
@@ -147,21 +138,12 @@ def Select_Datasource_By_ID(id):
     if id == None:
         return None
 
-    rs = {}
     try:
         with GetSession() as session:
-            instance = session.query(Datasource).filter(
-                Datasource.id == id).one()
-            rs['id'] = instance.id
-            rs['name'] = instance.name
-            rs['type'] = instance.type
-            rs['config'] = instance.config
-            rs['test_sql'] = instance.test_sql
-            rs['modi_time'] = instance.modi_time
-            return rs
+            return session.query(Datasource).filter(Datasource.id == id).one()
     except Exception as exception:
+        print(exception)
         return None
-    return rs
 
 
 def Insert_Datasource(name, type, config, test_sql=""):
