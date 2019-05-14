@@ -1,23 +1,29 @@
-from sqlalchemy import *
-from sqlalchemy.orm import sessionmaker
-from pydrill.client import PyDrill
-import json
-from src.db.model import *
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-engine = create_engine("mysql+pymysql://root:root@192.168.7.250:3306/bi")
-#Session = sessionmaker(engine)
-#session = Session()
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import *
+import json
+import os
+from config import CONFIG
+from .model import *  # TODO 从app.py启动程序
+
+config_name = (os.getenv('KROS_CONFIG') or 'default')
+DATABASE_URI = CONFIG[config_name].SQLALCHEMY_DATABASE_URI
+engine = create_engine(DATABASE_URI)
 
 
 class getSession:
     def __init__(self):
         Session = sessionmaker(engine)
         self.session = Session()
+
     def __enter__(self):
         return self.session
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.session.close()
+
 
 def Select_Cubes_By_Name(name):
     with getSession() as session:
@@ -63,21 +69,62 @@ def Select_Logictb_by_name(name):
 
 
 def Select_Datasource_By_ID(id):
-    with getSession() as session:
-        instance = session.query(Datasource).filter(Datasource.id == id).one()
-        rs = {}
-        rs['id'] = instance.id
-        rs['name'] = instance.name
-        rs['type'] = instance.type
-        rs['config'] = instance.config
-        rs['test_sql'] = instance.test_sql
-        rs['modi_time'] = instance.modi_time
-        return rs
+    '''
+    @description: 根据数据源ID返回数据源信息
+    @param {id} 
+    @return: 
+    '''
+    if id == None:
+        return None
+
+    rs = {}
+    try:
+        with getSession() as session:
+            instance = session.query(Datasource).filter(
+                Datasource.id == id).one()
+            rs['id'] = instance.id
+            rs['name'] = instance.name
+            rs['type'] = instance.type
+            rs['config'] = instance.config
+            rs['test_sql'] = instance.test_sql
+            rs['modi_time'] = instance.modi_time
+            return rs
+    except Exception as exception:
+        return None
+    return rs
 
 
-# 功能：根据表名查询所属数据源、数据库、物理数据库
-# 入参：逻辑表名
-# 返回：数据模型ID，数据源名.数据库名.物理数据库
+def Insert_Datasource(name, type, config, test_sql):
+    '''
+    @description: 插入新的数据源配置
+    @param {name} {type} {config} {test_sql}
+    @return: 
+    '''
+    if name == None or type == None or config == None or test_sql == None:
+        return False
+
+    try:
+        with getSession() as session:
+            New_Datasource = Datasource(
+                name=name,
+                type=type,
+                config=config,
+                test_sql=test_sql)
+            session.add(New_Datasource)
+            session.commit()
+    except Exception as exception:
+        return False
+    return True
+
+
+def Delete_Datasource_By_ID(id):
+    '''
+    @description: 根据数据源ID删除对应的数据
+    @param {id} 
+    @return: 
+    '''
+
+
 def GetDbName(logic_tb_name):
     with getSession() as session:
         logic_rs = Select_Logictb_by_name(logic_tb_name)
