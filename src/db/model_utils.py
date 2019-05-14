@@ -125,19 +125,32 @@ def Delete_Datasource_By_ID(id):
     '''
 
 
-def GetDbName(logic_tb_name):
+def Select_Datasource_By_Name(name):
     with getSession() as session:
-        logic_rs = Select_Logictb_by_name(logic_tb_name)
-        id = logic_rs['id']
-        datasource_id = logic_rs['datasource_id']
-        physical_tb = logic_rs['physical_tb']
+        instance = session.query(Datasource).filter(
+            Datasource.name == name).one()
+        rs = {}
+        rs['id'] = instance.id
+        rs['name'] = instance.name
+        rs['type'] = instance.type
+        rs['config'] = instance.config
+        rs['test_sql'] = instance.test_sql
+        rs['modi_time'] = instance.modi_time
+        return rs
 
-        ds_rs = Select_Datasource_By_ID(datasource_id)
-        source_name = ds_rs['name']
-        config = json.loads(ds_rs['config'])
-        db_name = config['db_name']
 
-        return id, source_name + "." + db_name + "." + physical_tb
+def GetDbName(logic_tb_name):
+    logic_rs = Select_Logictb_by_name(logic_tb_name)
+    id = logic_rs['id']
+    datasource_id = logic_rs['datasource_id']
+    physical_tb = logic_rs['physical_tb']
+
+    ds_rs = Select_Datasource_By_ID(datasource_id)
+    source_name = ds_rs['name']
+    config = json.loads(ds_rs['config'])
+    db_name = config['db_name']
+
+    return id, source_name + "." + db_name + "." + physical_tb
 
 
 if __name__ == '__main__':
