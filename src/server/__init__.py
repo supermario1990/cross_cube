@@ -5,7 +5,9 @@ from flask import Flask, Blueprint
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from config import CONFIG
+from flask_migrate import Migrate
 
+migrate = Migrate()
 mail = Mail()
 db = SQLAlchemy()
 
@@ -22,6 +24,7 @@ def create_app(config_name):
 
     mail.init_app(app)
     db.init_app(app)
+    migrate.init_app(app, db)
 
     from .olap import olap
     app.register_blueprint(olap, url_prefix='/olap')
