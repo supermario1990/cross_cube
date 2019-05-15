@@ -8,6 +8,7 @@ from logging import getLogger, Formatter, StreamHandler, FileHandler
 __all__ = [
     "get_logger",
     "create_logger",
+    "DEFAULT_LOGGER_PATH"
 ]
 
 DEFAULT_LOGGER_PATH = "log"

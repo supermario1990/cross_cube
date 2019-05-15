@@ -1,27 +1,35 @@
 from configparser import ConfigParser
 from utils import str_to_bool
 import os
+import logging
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
-class Config:
+class Config(dict):
+    LOGGER_OUTPUT_TYPE = ["default"]
+    LOGGER_LEVEL = logging.WARNING
     CONFIG_FILENAME = 'config.ini'
     JSON_RECORD_LIMIT = 1000
-    PRETTY_PRINT = 4
+    PRETTY_PRINT = False
     SECRET_KEY = os.environ.get(
         'SECRET_KEY') or 'Z3kDutZBDBa84hHzsofFqT8GPM78LOfZpYgMbAWyKDxFKqX5kBBG5k2Lf7KvzgOx07yLSA9mnPweWz+pZqQ7VQ=='
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    @staticmethod
-    def init_app(app):
+    def init_app(self, app):
         print("Config init app {}".format(app.name))
+
+    def has_attr(self, attr_name):
+        if attr_name in dir(self):
+            return True, getattr(self, attr_name)
+        return False, None
 
 
 class DevConfig(Config):
     CONFIG_SECTION = 'dev'
     DEBUG = True
+    LOGGER_LEVEL = logging.DEBUG
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
         'sqlite:///' + os.path.join(BASE_DIR, 'kros-dev.sqlite')
 
