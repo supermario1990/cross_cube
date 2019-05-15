@@ -1,14 +1,16 @@
 # 生成立方体model
 
-from src.db.model_utils import *
+from db.model import *
 import json
 import uuid
 import time
-from src.drill.drill_utils import *
+from drill.drill_utils import *
 
 def all_tbs(fact_table, lookups_list):
     tbs = []
     tbs.append(fact_table)
+    if not lookups_list:
+        return tbs
     for i in lookups_list['lookups']:
         tbs.append(i['table'])
     return tbs
@@ -40,8 +42,14 @@ def get_dims_measures(columns):
     return dims, measures
 
 
-def create_cube(fact_table, lookups):
-    lookups_list = json.loads(lookups)
+def create_cube(fact_table, lookups = None):
+    if not fact_table:
+        return "fact_table param required!"
+
+    if not lookups:
+        lookups_list = None
+    else:
+        lookups_list = json.loads(lookups)
     print(all_tbs(fact_table, lookups_list))
     all_dims = []
     all_measures = []
@@ -84,7 +92,8 @@ def create_cube(fact_table, lookups):
     cube_model['name'] = ''
     cube_model['description'] = ''
     cube_model['alias'] = 't_0'
-    cube_model['lookups'] = lookups_list['lookups']
+    if not lookups_list:
+        cube_model['lookups'] = lookups_list['lookups']
     cube_model['dimensions'] = all_dims
     cube_model['measures'] = all_measures
 
@@ -95,9 +104,9 @@ if __name__ == '__main__':
     # 参数
     # fact_table, lookups
     fact_table = 'mysql_250.sales'
-    lookups = '{"lookups": [{"index": 1,"table": "mysql_250.dates","kind": "LOOKUP","alias": "t_1","join": {"type": "inner","primary_key": "t_1.id","foreign_key": "t_0.date_id"}}]}'
+    #lookups = '{"lookups": [{"index": 1,"table": "mysql_250.dates","kind": "LOOKUP","alias": "t_1","join": {"type": "inner","primary_key": "t_1.id","foreign_key": "t_0.date_id"}}]}'
 
-    cube = create_cube(fact_table, lookups)
+    cube = create_cube(fact_table)
     with open('model.json', 'w', encoding='utf-8') as f:
         f.write(cube)
 
