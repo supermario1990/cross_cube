@@ -11,10 +11,12 @@ migrate = Migrate()
 mail = Mail()
 db = SQLAlchemy()
 
-version = {"major": 0, "minor":0, "patch":1}
+version = {"major": 0, "minor": 0, "patch": 1}
+
 
 def get_version():
     return '.'.join(map(str, version.values()))
+
 
 def create_app(config_name):
     """
@@ -31,6 +33,6 @@ def create_app(config_name):
     migrate.init_app(app, db)
 
     from .olap import olap
-    app.register_blueprint(olap, url_prefix='/olap')
+    app.register_blueprint(olap, config=current_config, url_prefix='/olap')
 
     return app

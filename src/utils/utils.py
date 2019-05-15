@@ -46,18 +46,33 @@ def str_to_bool(string):
     return None
 
 
-def formatted_response(response):
-    """
-    返回`application/json, 转换对象到JSON。
-    """
+def jsonify(obj):
+    """Returns a ``application/json`` `Response` object with `obj` converted
+    to JSON."""
 
-    if g.prettyprint:
+    if g.PRETTY_PRINT:
         indent = 4
     else:
         indent = None
 
     encoder = JSONEncoder(indent=indent)
-    encoder.iterator_limit = g.json_record_limit
-    data = encoder.iterencode(response)
+    encoder.iterator_limit = g.JSON_RECORD_LIMIT
+    data = encoder.iterencode(obj)
 
     return Response(data, mimetype='application/json')
+
+
+def formatted_response(response):
+    """返回`application/json, 转换对象到JSON。"""
+    return jsonify(response)
+
+
+class CustomDict(dict):
+    def __getattr__(self, attr):
+        try:
+            return super(CustomDict, self).__getitem__(attr)
+        except KeyError:
+            return super(CustomDict, self).__getattribute__(attr)
+
+    def __setattr__(self, attr, value):
+        self.__setitem__(attr, value)

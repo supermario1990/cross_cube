@@ -3,6 +3,8 @@
 
 from ..decorator import log_request
 from . import olap
+from flask import request
+import json
 from db import *
 from utils import formatted_response
 
@@ -33,11 +35,11 @@ def delete_datasource():
     pass
 
 
-@olap.route('/datasource/test/{datasource_id}', methods=['POST'])
+@olap.route('/datasource/test/<datasource_id>', methods=['GET', 'POST'])
 def test_datasource():
     pass
 
 
-@olap.route('/datasource/table_list/{datasource_id}', methods=['POST'])
+@olap.route('/datasource/table_list/<datasource_id>', methods=['GET', 'POST'])
 def query_datasource_table_list():
     pass
