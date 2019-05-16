@@ -19,4 +19,4 @@ def index():
 @app.route('/version')
 def version():
     return get_version()
-app.run()
+#app.run()

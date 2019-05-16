@@ -1,7 +1,7 @@
 # cude 模型解析
 
 import json
-from src.db.model_utils import *
+from db.model import *
 
 # dims: {"dimensions":[{"table": "mysql_250.sales", "alias":"t_0", "columns":[{"name": "product_id", "alias": "product_id"}]},
 #                     {"table": "mysql_250.dates", "alias":"t_1", "columns":[{"name": "date_year", "alias": "YEAR"}]}]}
@@ -113,11 +113,11 @@ def generate_filter(filter):
 def get_full_table(table):
     ds = table.split('.')[0]
     rs = Select_Datasource_By_Name(ds)
-    return '.'.join((rs['name'], json.loads(rs['config'])['db_name'])) + '.'+ table.split('.')[1]
+    return '.'.join((rs.name, json.loads(rs.config)['db_name'])) + '.'+ table.split('.')[1]
 
-def parse(cube_uuid, dims = None, measures = None, filters = None):
-    if not cube_uuid:
-        return 'no uuid!'
+def parse(model, dims = None, measures = None, filters = None):
+    if not model:
+        return 'no model!'
     # 维度和度量必须同时存在，或者同时不存在
     if not dims:
         if measures:
@@ -125,10 +125,6 @@ def parse(cube_uuid, dims = None, measures = None, filters = None):
     if not measures:
         if dims:
             return 'no measures!'
-
-    model_file = 'D:/szkingdomGIT/kros/model/model.json'
-    with open(model_file, 'r', encoding='utf-8') as f:
-        model = json.load(f)
 
     print(model)
 
@@ -161,12 +157,15 @@ def parse(cube_uuid, dims = None, measures = None, filters = None):
 
     if dims and measures:
         conditions, groupby = generate_select_conditions(dims, measures)
+        if groupby and len(groupby) > 0:
+            groupby = " group by " + groupby
+
         select_sql = 'select ' + conditions + ' from '
 
     if filters:
         where = generate_filter(filters)
 
-    sql = select_sql + flat_tb + where + " group by " + groupby
+    sql = select_sql + flat_tb + where + groupby
     #print('sql:', sql)
     return sql
 

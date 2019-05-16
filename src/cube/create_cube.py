@@ -17,7 +17,8 @@ def all_tbs(fact_table, lookups_list):
 
 def get_db(datasource):
     rs = Select_Datasource_By_Name(datasource)
-    return '.'.join((rs['name'], json.loads(rs['config'])['db_name']))
+    db_name = '.'.join((rs.name, json.loads(rs.config)['db_name']))
+    return db_name
 
 def get_tb_alias(index):
     return 't_' + str(index)
@@ -42,7 +43,7 @@ def get_dims_measures(columns):
     return dims, measures
 
 
-def create_cube(fact_table, lookups = None):
+def create_cube(fact_table, lookups = None, name = None):
     if not fact_table:
         return "fact_table param required!"
 
@@ -57,10 +58,10 @@ def create_cube(fact_table, lookups = None):
     index = 0
     for i in all_tbs(fact_table, lookups_list):
         ds = i.split('.')[0]
-        db = get_db(ds)
+        db_name = get_db(ds)
         tb = i.split('.')[1]
 
-        sql = 'SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ' + '\'' + tb + '\'' +  'AND TABLE_SCHEMA = ' + '\'' + db + '\''
+        sql = 'SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = ' + '\'' + tb + '\'' +  'AND TABLE_SCHEMA = ' + '\'' + db_name + '\''
         print(sql)
         rs = drill_get(sql)
 
@@ -89,15 +90,15 @@ def create_cube(fact_table, lookups = None):
     cube_model['uuid'] = str(cube_uuid)
     cube_model['last_modified'] = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
     cube_model['fact_table'] = fact_table
-    cube_model['name'] = ''
+    cube_model['name'] = name
     cube_model['description'] = ''
     cube_model['alias'] = 't_0'
-    if not lookups_list:
+    if lookups_list:
         cube_model['lookups'] = lookups_list['lookups']
     cube_model['dimensions'] = all_dims
     cube_model['measures'] = all_measures
 
-    return json.dumps(cube_model)
+    return cube_model
 
 
 if __name__ == '__main__':

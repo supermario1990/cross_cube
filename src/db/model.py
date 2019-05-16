@@ -41,8 +41,6 @@ def Select_Datasource_By_Name(name):
     @param {id}
     @return:
     '''
-    if id == None:
-        return None
 
     try:
         return db.session.query(Datasource).filter(Datasource.name == name).one()
@@ -120,7 +118,7 @@ def Select_Dataset_By_ID(id):
         return None
 
 
-def Insert_Dataset(id ,name, cube_uuid):
+def Insert_Dataset(name, cube_uuid, commit=True):
     '''
     @description: 插入新的数据集信息
     @param {name} {cube_uuid}
@@ -137,7 +135,8 @@ def Insert_Dataset(id ,name, cube_uuid):
             name=name,
             cube_uuid=cube_uuid)
         db.session.add(New_Dataset)
-        db.session.commit()
+        if commit:
+            db.session.commit()
         return New_Dataset.id
     except Exception as exception:
         print(exception)
@@ -190,25 +189,30 @@ def Select_Cube_By_ID(id):
         return None
 
 
-def Insert_Cube(name, name_alias, cube=None, extends=None):
+def Insert_Cube(name, name_alias, cube=None, extends=None, commit=True):
     '''
     @description: 插入新的立方体信息
     @param {name} {name_alias} {cube_info} {extends_info}
     @return:
     '''
-    if cube == None:
-        cube = "".encode(encoding='utf-8')
-    if extends == None:
-        extends = "".encode(encoding='utf-8')
 
+    if cube:
+        cube = bytes(cube, encoding='utf-8')
+
+    if extends:
+        extends = bytes(extends, encoding='utf-8')
+
+    id = str(uuid1())
     try:
         New_Cube = Cubes(
+            id= id,
             name=name,
             name_alias=name_alias,
             cube=cube,
             extends=extends)
         db.session.add(New_Cube)
-        db.session.commit()
+        if commit:
+            db.session.commit()
         return New_Cube.id
     except Exception as exception:
         print(exception)
@@ -232,6 +236,15 @@ def Delete_Cube_By_ID(id):
         print(exception)
         return False
 
+
+def Inserts(*args):
+    try:
+        for i in args:
+            db.session.add(i)
+        db.session.commit()
+        return True
+    except Exception as e:
+        return False, str(e)
 
 if __name__ == '__main__':
     # ModelBase.metadata.drop_all(engine)
