@@ -8,7 +8,7 @@ from server import db
 class Cubes(db.Model):
     name = db.Column(db.String(128), primary_key=True, index=True, unique=True)
     name_alias = db.Column(db.String(128), index=True, unique=True)
-    dataset_uuid = db.Column(db.String(128), db.ForeignKey('dataset.id', ondelete='CASCADE'))
+    dataset_uuid = db.Column(db.String(128))
     cube = db.Column(db.LargeBinary)
     extends = db.Column(db.LargeBinary)
     modi_time = db.Column(db.TIMESTAMP, nullable=False)

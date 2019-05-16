@@ -21,13 +21,16 @@ def create_dataset(name):
             lookups = request.form.get('lookups')
 
             # 创建立方体
-            cube = create_cube(fact_table, lookups, name)
-            cube_json = json.dumps(cube)
-            cube_id = Insert_Cube(name, name, cube_json, None, commit=True)
-            dataset_id = Insert_Dataset(name, cube_id, commit=True)
-            return jsonify(cube)
+            cube_model = create_cube(fact_table, lookups, name)
+            cube_json = json.dumps(cube_model)
+
+            id = str(uuid1())
+            dataset = Dataset(id=id, name=name)
+            cube = Cubes(name=name, name_alias=name, dataset_uuid=id, cube=bytes(cube_json, encoding='utf-8'))
+            Inserts(dataset, cube)
+            return jsonify(cube_model)
         except Exception as e:
-            return e
+            return str(e)
 
 
 @olap.route('/cube/<id>', methods=['POST'])
@@ -50,12 +53,32 @@ def query_cude(id):
     except Exception as e:
         return str(e)
 
-
 @olap.route('/test')
 def test():
-    id = str(uuid1())
-    Dataset(id, name='a1')
-    Cubes(name='a1', name_alias='a1', )
+    """
+    测试
+    :return:
+    """
+    try:
+        id = str(uuid1())
+        dataset = Dataset(id=id, name='a1')
+        cube = Cubes(name='a1', name_alias='a1', dataset_uuid=id, cube=bytes("{}", encoding='utf-8'),
+              extends=bytes("{}", encoding='utf-8'))
+        Inserts(dataset, cube)
 
-    id = str(uuid1())
-    Dataset(id, name='a2')
+
+        id = str(uuid1())
+        dataset = Dataset(id=id, name='a2')
+        cude = Cubes(name='a2', name_alias='a2', dataset_uuid=id, cube=bytes("{}", encoding='utf-8'),
+              extends=bytes("{}", encoding='utf-8'))
+        Inserts(dataset, cube)
+
+        id = str(uuid1())
+        dataset = Dataset(id=id, name='a3')
+        cube = Cubes(name='a3', name_alias='a3', dataset_uuid=id, cube=bytes("{}", encoding='utf-8'),
+              extends=bytes("{}", encoding='utf-8'))
+        Inserts(dataset, cube)
+
+        return "ok"
+    except Exception as e:
+        return str(e)

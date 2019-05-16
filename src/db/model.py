@@ -41,12 +41,13 @@ def Select_Datasource_By_Name(name):
     @param {id}
     @return:
     '''
-
+    if not name:
+        raise ValueError('name param required')
     try:
         return db.session.query(Datasource).filter(Datasource.name == name).one()
-    except Exception as exception:
-        print(exception)
-        return None
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 
 def Insert_Datasource(name, type, config, test_sql=""):
@@ -108,17 +109,17 @@ def Select_Dataset_By_ID(id):
     @param {id}
     @return:
     '''
-    if id == None:
-        return None
+    if not id:
+        raise ValueError('id param required')
 
     try:
         return db.session.query(Dataset).filter(Dataset.id == id).one()
-    except Exception as exception:
-        print(exception)
-        return None
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 
-def Insert_Dataset(name, cube_uuid, commit=True):
+def Insert_Dataset(name, commit=True):
     '''
     @description: 插入新的数据集信息
     @param {name} {cube_uuid}
@@ -126,21 +127,21 @@ def Insert_Dataset(name, cube_uuid, commit=True):
     '''
 
     id = str(uuid1())
-    if name == None or cube_uuid == None:
-        return None
+    if not name:
+        raise ValueError('name param required')
 
     try:
         New_Dataset = Dataset(
             id= id,
-            name=name,
-            cube_uuid=cube_uuid)
+            name=name
+            )
         db.session.add(New_Dataset)
         if commit:
             db.session.commit()
         return New_Dataset.id
-    except Exception as exception:
-        print(exception)
-        return None
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 
 def Delete_Dataset_By_ID(id):
@@ -168,9 +169,9 @@ def Query_Cubes():
     '''
     try:
         db.session.query(Cubes).order_by(Cubes.create_time).all()
-    except Exception as exception:
-        print(exception)
-        return None
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 
 def Select_Cube_By_ID(id):
@@ -179,22 +180,24 @@ def Select_Cube_By_ID(id):
     @param {id}
     @return:
     '''
-    if id == None:
-        return None
+    if not id:
+        raise ValueError('id param required')
 
     try:
-        return db.session.query(Cubes).filter(Cubes.id == id).one()
-    except Exception as exception:
-        print(exception)
-        return None
+        return db.session.query(Cubes).filter(Cubes.dataset_uuid == id).one()
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 
-def Insert_Cube(name, name_alias, cube=None, extends=None, commit=True):
+def Insert_Cube(name, name_alias, dataset_uuid, cube=None, extends=None, commit=True):
     '''
     @description: 插入新的立方体信息
     @param {name} {name_alias} {cube_info} {extends_info}
     @return:
     '''
+    if not name or not name_alias or not dataset_uuid:
+        raise ValueError('wrang income params')
 
     if cube:
         cube = bytes(cube, encoding='utf-8')
@@ -202,21 +205,20 @@ def Insert_Cube(name, name_alias, cube=None, extends=None, commit=True):
     if extends:
         extends = bytes(extends, encoding='utf-8')
 
-    id = str(uuid1())
     try:
         New_Cube = Cubes(
-            id= id,
             name=name,
             name_alias=name_alias,
+            dataset_uuid=dataset_uuid,
             cube=cube,
             extends=extends)
         db.session.add(New_Cube)
         if commit:
             db.session.commit()
         return New_Cube.id
-    except Exception as exception:
-        print(exception)
-        return None
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 
 def Delete_Cube_By_ID(id):
@@ -226,15 +228,15 @@ def Delete_Cube_By_ID(id):
     @return:
     '''
     if id == None:
-        return False
+        raise ValueError('id param required')
 
     try:
         db.session.query(Cubes).filter(Cubes.id == id).delete()
         db.session.commit()
         return True
-    except Exception as exception:
-        print(exception)
-        return False
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 
 def Inserts(*args):
@@ -244,7 +246,9 @@ def Inserts(*args):
         db.session.commit()
         return True
     except Exception as e:
-        return False, str(e)
+        db.session.rollback()
+        raise e
+
 
 if __name__ == '__main__':
     # ModelBase.metadata.drop_all(engine)
