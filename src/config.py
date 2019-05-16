@@ -7,6 +7,8 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config(dict):
+    DRILL_IP = "localhost"
+    DRILL_PORT = 8047
     LOGGER_OUTPUT_TYPE = ["default"]
     LOGGER_LEVEL = logging.WARNING
     CONFIG_FILENAME = 'config.ini'
@@ -43,6 +45,10 @@ class DevConfig(Config):
             if config.has_option(self.CONFIG_SECTION, "debug"):
                 self.DEBUG = str_to_bool(
                     config.get(self.CONFIG_SECTION, "debug"))
+            if config.has_option(self.CONFIG_SECTION, "ip"):
+                self.DRILL_IP = config.get(self.CONFIG_SECTION, "ip")
+            if config.has_option(self.CONFIG_SECTION, "port"):
+                self.DRILL_PORT = config.get(self.CONFIG_SECTION, "port")
 
 
 class ProConfig(Config):
@@ -61,9 +67,13 @@ class ProConfig(Config):
             if config.has_option(self.CONFIG_SECTION, "debug"):
                 self.DEBUG = str_to_bool(
                     config.get(self.CONFIG_SECTION, "debug"))
+            if config.has_option(self.CONFIG_SECTION, "ip"):
+                self.DRILL_IP = config.get(self.CONFIG_SECTION, "ip")
+            if config.has_option(self.CONFIG_SECTION, "port"):
+                self.DRILL_PORT = config.get(self.CONFIG_SECTION, "port")
 
 
-CONFIG = {
+Config = {
     'dev': DevConfig(),
     'pro': ProConfig(),
     'default': DevConfig()

@@ -8,16 +8,16 @@ import datetime
 
 from db.db_base import *
 
+
 def Query_Datasource():
     '''
     @description: 查询所有的数据源信息
     @return: 
     '''
-    try:
-        return db.session.query(Datasource).order_by(Datasource.modi_time).all()
-    except Exception as exception:
-        print(exception)
-        return None
+    data = db.session.query(Datasource).order_by(
+        Datasource.modi_time).all()
+    db.session.close()
+    return data
 
 
 def Select_Datasource_By_ID(id):
@@ -26,14 +26,11 @@ def Select_Datasource_By_ID(id):
     @param {id}
     @return:
     '''
-    if id == None:
-        return None
+    data = db.session.query(Datasource).filter(
+        Datasource.id == id).one()
+    db.session.close()
+    return data
 
-    try:
-        return db.session.query(Datasource).filter(Datasource.id == id).one()
-    except Exception as exception:
-        print(exception)
-        return None
 
 def Select_Datasource_By_Name(name):
     '''
@@ -49,44 +46,72 @@ def Select_Datasource_By_Name(name):
         return None
 
 
-def Insert_Datasource(name, type, config, test_sql=""):
+def Insert_Datasource(name, type, config, test_sql, commit=True):
     '''
     @description: 插入新的数据源配置
     @param {name} {type} {config} {test_sql}
     @return:
     '''
-    if name == None or type == None or config == None or test_sql == None:
-        return None
-
-    try:
-            New_Datasource = Datasource(
-                name=name,
-                type=type,
-                config=config,
-                test_sql=test_sql)
-            db.session.add(New_Datasource)
-            db.session.commit()
-            return New_Datasource.id
-    except Exception as exception:
-        print(exception)
-        return None
+    New_Datasource = Datasource(
+        id=str(uuid1()),
+        name=name,
+        type=type,
+        config=config,
+        test_sql=test_sql)
+    db.session.add(New_Datasource)
+    if commit:
+        db.session.commit()
+    return New_Datasource.id
 
 
-def Delete_Datasource_By_ID(id):
+def Update_Datasource(id, name, type, config, test_sql, commit=True):
+    '''
+    @description: 更新数据源配置
+    @param {id} {name} {type} {config} {test_sql}
+    @return:
+    '''
+    db.session.query(Datasource).filter(
+        Datasource.id == id).update(
+            {
+                'id': id,
+                'name': name,
+                'type': type,
+                'config': config,
+                'test_sql': test_sql
+            })
+    if commit:
+        db.session.commit()
+    return id
+
+
+def Delete_Datasource_By_ID(id, commit=True):
     '''
     @description: 根据数据源ID删除对应的数据
     @param {id}
     @return:
     '''
-    if id == None:
+    db.session.query(Datasource).filter(Datasource.id == id).delete()
+    if commit:
+        db.session.commit()
+    return True
+
+
+def Delete_Datasource_By_Name(name):
+    '''
+    @description: 根据数据源名称删除对应的数据
+    @param {name}
+    @return:
+    '''
+    if name == None:
         return False
 
     try:
-        db.session.query(Datasource).filter(Datasource.id == id).delete()
+        db.session.query(Datasource).filter(Datasource.name == name).delete()
         db.session.commit()
         return True
     except Exception as exception:
         print(exception)
+        db.session.rollback()
         return False
 
 
@@ -131,7 +156,7 @@ def Insert_Dataset(name, cube_uuid, commit=True):
 
     try:
         New_Dataset = Dataset(
-            id= id,
+            id=id,
             name=name,
             cube_uuid=cube_uuid)
         db.session.add(New_Dataset)
@@ -205,7 +230,7 @@ def Insert_Cube(name, name_alias, cube=None, extends=None, commit=True):
     id = str(uuid1())
     try:
         New_Cube = Cubes(
-            id= id,
+            id=id,
             name=name,
             name_alias=name_alias,
             cube=cube,
@@ -245,40 +270,3 @@ def Inserts(*args):
         return True
     except Exception as e:
         return False, str(e)
-
-if __name__ == '__main__':
-    # ModelBase.metadata.drop_all(engine)
-    # ModelBase.metadata.create_all(engine)
-    id = Insert_Datasource('Mysql-250',
-                           'mysql',
-                           "{\"ip\":\"192.168.7.250\",\"port\":3306,\"user\":\"root\",\"password\":\"root\"}",
-                           'SELECT 1')
-    id = Insert_Datasource('Mysql-250-2',
-                           'mysql',
-                           "{\"ip\":\"192.168.7.250\",\"port\":3306,\"user\":\"root\",\"password\":\"root\"}",
-                           'SELECT 1')
-    print(Query_Datasource())
-    print(Select_Datasource_By_ID(id))
-    print(Delete_Datasource_By_ID(id))
-    print(Select_Datasource_By_ID(id))
-
-    # 外键异常 插入数据集之前，必须先插入立方体
-    dataset_id0 = Insert_Dataset('Sales', "0")
-
-    cube_id0 = Insert_Cube(
-        "test-cube", "测试立方体0", "{}".encode(encoding='utf-8'), "{}".encode(encoding='utf-8'))
-    cube_id1 = Insert_Cube(
-        "test-cube", "测试立方体1", "{}".encode(encoding='utf-8'), "{}".encode(encoding='utf-8'))
-
-    print(Query_Cubes())
-    print(Select_Cube_By_ID(cube_id1))
-    print(Delete_Cube_By_ID(cube_id1))
-    print(Select_Cube_By_ID(cube_id1))
-
-    cube_id2 = Insert_Cube("test-cube", "测试立方体2")
-    dataset_id1 = Insert_Dataset('Sales', cube_id0)
-    dataset_id2 = Insert_Dataset('Sales2', cube_id2)
-    print(Query_Dataset())
-    print(Select_Dataset_By_ID(dataset_id1))
-    print(Delete_Dataset_By_ID(dataset_id2))
-    print(Select_Dataset_By_ID(dataset_id2))

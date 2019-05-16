@@ -30,6 +30,6 @@ def log_request(func, *args, **kw):
         "host": request.host,
         "is_json": request.is_json,
     }
-    logger.log(request.method, request.path, params)
+    logger.log_time(params)
     result = func(*args, **kw)
     return result
