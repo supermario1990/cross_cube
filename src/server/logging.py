@@ -3,6 +3,7 @@
 from contextlib import contextmanager
 from threading import Thread
 from queue import Queue
+from flask import request
 
 import datetime
 import time
@@ -49,18 +50,17 @@ class RequestLogger(object):
         self.logger = get_logger()
 
     @contextmanager
-    def log_time(self, method, path, params, **other):
+    def log_time(self, params, method=None, path=None, **other):
         start = time.time()
         yield
         elapsed = time.time() - start
-        self.log(method, method, path, params, elapsed, **other)
+        self.log(params, method, path, elapsed, **other)
 
-    def log(self, method, path, params, elapsed=None, **other):
-
+    def log(self, params, method=None, path=None, elapsed=None, **other):
         record = {
             "timestamp": time.time(),
-            "method": method,
-            "path": path,
+            "method": method or request.method,
+            "path": path or request.path,
             "elapsed_time": elapsed or 0,
         }
         record.update(other)

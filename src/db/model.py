@@ -8,16 +8,16 @@ import datetime
 
 from db.db_base import *
 
+
 def Query_Datasource():
     '''
     @description: 查询所有的数据源信息
     @return: 
     '''
-    try:
-        return db.session.query(Datasource).order_by(Datasource.modi_time).all()
-    except Exception as exception:
-        print(exception)
-        return None
+    data = db.session.query(Datasource).order_by(
+        Datasource.modi_time).all()
+    db.session.close()
+    return data
 
 
 def Select_Datasource_By_ID(id):
@@ -26,14 +26,11 @@ def Select_Datasource_By_ID(id):
     @param {id}
     @return:
     '''
-    if id == None:
-        return None
+    data = db.session.query(Datasource).filter(
+        Datasource.id == id).one()
+    db.session.close()
+    return data
 
-    try:
-        return db.session.query(Datasource).filter(Datasource.id == id).one()
-    except Exception as exception:
-        print(exception)
-        return None
 
 def Select_Datasource_By_Name(name):
     '''
@@ -41,53 +38,80 @@ def Select_Datasource_By_Name(name):
     @param {id}
     @return:
     '''
-    if not name:
-        raise ValueError('name param required')
+
     try:
         return db.session.query(Datasource).filter(Datasource.name == name).one()
-    except Exception as e:
-        db.session.rollback()
-        raise e
+    except Exception as exception:
+        print(exception)
+        return None
 
 
-def Insert_Datasource(name, type, config, test_sql=""):
+def Insert_Datasource(name, type, config, test_sql, commit=True):
     '''
     @description: 插入新的数据源配置
     @param {name} {type} {config} {test_sql}
     @return:
     '''
-    if name == None or type == None or config == None or test_sql == None:
-        return None
-
-    try:
-            New_Datasource = Datasource(
-                name=name,
-                type=type,
-                config=config,
-                test_sql=test_sql)
-            db.session.add(New_Datasource)
-            db.session.commit()
-            return New_Datasource.id
-    except Exception as exception:
-        print(exception)
-        return None
+    New_Datasource = Datasource(
+        id=str(uuid1()),
+        name=name,
+        type=type,
+        config=config,
+        test_sql=test_sql)
+    db.session.add(New_Datasource)
+    if commit:
+        db.session.commit()
+    return New_Datasource.id
 
 
-def Delete_Datasource_By_ID(id):
+def Update_Datasource(id, name, type, config, test_sql, commit=True):
+    '''
+    @description: 更新数据源配置
+    @param {id} {name} {type} {config} {test_sql}
+    @return:
+    '''
+    db.session.query(Datasource).filter(
+        Datasource.id == id).update(
+            {
+                'id': id,
+                'name': name,
+                'type': type,
+                'config': config,
+                'test_sql': test_sql
+            })
+    if commit:
+        db.session.commit()
+    return id
+
+
+def Delete_Datasource_By_ID(id, commit=True):
     '''
     @description: 根据数据源ID删除对应的数据
     @param {id}
     @return:
     '''
-    if id == None:
+    db.session.query(Datasource).filter(Datasource.id == id).delete()
+    if commit:
+        db.session.commit()
+    return True
+
+
+def Delete_Datasource_By_Name(name):
+    '''
+    @description: 根据数据源名称删除对应的数据
+    @param {name}
+    @return:
+    '''
+    if name == None:
         return False
 
     try:
-        db.session.query(Datasource).filter(Datasource.id == id).delete()
+        db.session.query(Datasource).filter(Datasource.name == name).delete()
         db.session.commit()
         return True
     except Exception as exception:
         print(exception)
+        db.session.rollback()
         return False
 
 

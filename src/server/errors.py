@@ -5,7 +5,7 @@ import json
 
 
 class ServerError(HTTPException):
-    error_code = 500
+    code = 500
     error_type = "internal server error"
 
     def __init__(self, message=None, exception=None, **details):
@@ -34,12 +34,12 @@ class ServerError(HTTPException):
 
 
 class RequestError(ServerError):
-    error_code = 400
+    code = 400
     error_type = "bad request"
 
 
 class NotAuthenticatedError(ServerError):
-    error_code = 401
+    code = 401
     error_type = "not authenticated"
 
     def __init__(self, message=None, exception=None, realm=None, **details):
@@ -57,12 +57,12 @@ class NotAuthenticatedError(ServerError):
 
 
 class NotAuthorizedError(ServerError):
-    error_code = 403
+    code = 403
     error_type = "not authorized"
 
 
 class NotFoundError(ServerError):
-    error_code = 404
+    code = 404
     error_type = "not found"
 
     def __init__(self, message=None):
@@ -70,7 +70,7 @@ class NotFoundError(ServerError):
 
 
 class ObjectNotFoundError(ServerError):
-    error_code = 404
+    code = 404
     error_type = "object not found"
 
     def __init__(self, obj, objtype=None, message=None):
@@ -85,3 +85,8 @@ class ObjectNotFoundError(ServerError):
         else:
             self.message = "Object '%s' of type '%s' was not found" % (
                 obj, objtype)
+
+
+class ConflictError(ServerError):
+    code = 409
+    error_type = "resource conflict"
