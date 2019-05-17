@@ -5,6 +5,7 @@ from pydrill.exceptions import ImproperlyConfigured, ConnectionError, Connection
 
 import os
 from urllib.parse import urlencode
+from .drill_dbconfig import get_support_drill_config, UnsupportedDBTypeError, DatasourceConfigError
 
 
 class PyTransport(Transport):
@@ -109,46 +110,32 @@ except Exception as exception:
                           trasport_class=PyTransport)
 
 
+class DrillException(ImproperlyConfigured):
+
+    def __str__(self):
+        return repr('config error or bi server status error...')
+
+
 def drill_get(sql):
 
     if not drill.is_active():
-        raise ImproperlyConfigured('Please run Drill first')
+        raise DrillException()
 
     yelp_reviews = drill.query(sql)
     return yelp_reviews.rows
 
 
-def drill_storage():
+def drill_storage_update(type, name, config):
 
     if not drill.is_active():
-        raise ImproperlyConfigured('Please run Drill first')
+        raise DrillException()
 
-    storage = drill.storage()
-    return storage.data
+    drill_config = get_support_drill_config(type)
+    if drill_config is None:
+        raise UnsupportedDBTypeError()
 
-
-def drill_storage_detail(name):
-
-    if not drill.is_active():
-        raise ImproperlyConfigured('Please run Drill first')
-
-    storage = drill.storage_detail(name)
-    return storage.data
-
-
-def drill_storage_enable(name, value=True):
-
-    if not drill.is_active():
-        raise ImproperlyConfigured('Please run Drill first')
-
-    storage = drill.storage_enable(name, value)
-    return storage.data
-
-
-def drill_storage_update(name, config):
-
-    if not drill.is_active():
-        raise ImproperlyConfigured('Please run Drill first')
+    if not drill_config.check_config(config):
+        raise DatasourceConfigError()
 
     storage = drill.storage_create(name, config)
     return storage.data
@@ -157,7 +144,7 @@ def drill_storage_update(name, config):
 def drill_storage_delete(name):
 
     if not drill.is_active():
-        raise ImproperlyConfigured('Please run Drill first')
+        raise DrillException()
 
     storage = drill.storage_delete(name)
     return storage.data

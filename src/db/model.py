@@ -52,6 +52,8 @@ def Insert_Datasource(name, type, config, test_sql, commit=True):
     @param {name} {type} {config} {test_sql}
     @return:
     '''
+    if test_sql is None:
+        test_sql = ""
     New_Datasource = Datasource(
         id=str(uuid1()),
         name=name,
