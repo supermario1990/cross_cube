@@ -2,9 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from uuid import uuid1
-import os
-import json
-import datetime
 
 from db.db_base import *
 
@@ -143,6 +140,23 @@ def Select_Dataset_By_ID(id):
         raise e
 
 
+def Select_Dataset_By_Name(name):
+    '''
+    @description: 根据数据集名字返回数据集信息
+    @param {name}
+    @return:
+    '''
+    if not name:
+        raise ValueError('name param required')
+
+    try:
+        rs = db.session.query(Dataset).filter(Dataset.name == name).one()
+        return rs
+    except Exception as e:
+        db.session.rollback()
+        raise e
+
+
 def Insert_Dataset(name, commit=True):
     '''
     @description: 插入新的数据集信息
@@ -168,22 +182,38 @@ def Insert_Dataset(name, commit=True):
         raise e
 
 
-def Delete_Dataset_By_ID(id):
+def Delete_Dataset_By_ID(id, commit=True):
     '''
     @description: 根据数据集ID删除对应的数据
     @param {id}
     @return:
     '''
     if id == None:
-        return False
+        raise ValueError('Delete dataset by id, id param required')
 
     try:
         db.session.query(Dataset).filter(Dataset.id == id).delete()
-        db.session.commit()
+        if commit:
+            db.session.commit()
         return True
-    except Exception as exception:
-        print(exception)
-        return False
+    except Exception as e:
+        db.session.rollback()
+        raise e
+
+def Update_Dataset(id, name, commit=True):
+    try:
+        db.session.query(Dataset).filter(Dataset.id == id).update(
+            {
+                'id': id,
+                'name': name
+            }
+        )
+        if commit:
+            db.session.commit()
+        return id
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
 
 def Query_Cubes():
@@ -244,8 +274,24 @@ def Insert_Cube(name, name_alias, dataset_uuid, cube=None, extends=None, commit=
         db.session.rollback()
         raise e
 
+def Update_Cube(name, name_alias, dataset_uuid, cube, extends=None, commit=True):
+    try:
+        db.session.query(Cubes).filter(Cubes.dataset_uuid == dataset_uuid).update(
+            {
+                'name': name,
+                'name_alias': name_alias,
+                'dataset_uuid': dataset_uuid,
+                'cube': cube,
+                'extends': extends
+            }
+        )
+        if commit:
+            db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise e
 
-def Delete_Cube_By_ID(id):
+def Delete_Cube_By_ID(id, commit=True):
     '''
     @description: 根据立方体ID删除对应的数据
     @param {id}
@@ -255,8 +301,9 @@ def Delete_Cube_By_ID(id):
         raise ValueError('id param required')
 
     try:
-        db.session.query(Cubes).filter(Cubes.id == id).delete()
-        db.session.commit()
+        db.session.query(Cubes).filter(Cubes.dataset_uuid == id).delete()
+        if commit:
+            db.session.commit()
         return True
     except Exception as e:
         db.session.rollback()

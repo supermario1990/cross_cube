@@ -6,7 +6,8 @@ db_base.py
 from server import db
 
 class Cubes(db.Model):
-    name = db.Column(db.String(128), primary_key=True, index=True, unique=True)
+    id = db.Column(db.BigInteger, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(128), index=True, unique=True)
     name_alias = db.Column(db.String(128), index=True, unique=True)
     dataset_uuid = db.Column(db.String(128))
     cube = db.Column(db.LargeBinary)
