@@ -379,7 +379,7 @@ def test_datasource(id):
                               ErrorCode.TEST_DATASOURCE_FAILED)
 
 
-@olap.route('/datasource/table_list/<id>', methods=['GET'])
+@olap.route('/datasource/table_list/<id>/', methods=['GET'])
 def query_datasource_table_list(id):
     """
     根据数据源ID获取数据源下的所有表。
@@ -411,3 +411,31 @@ def query_datasource_table_list(id):
         raise CommonException("获取数据源下表列表失败...",
                               exception,
                               ErrorCode.GET_DATASOURCE_TABLES_FAILED)
+
+
+@olap.route('/datasource/all_table', methods=['GET'])
+def query_datasource_all_table():
+    """
+    获取所有表。
+    ---
+    tags:
+      - 获取所有表。
+    responses:
+      200:
+        description: 成功。
+    """
+    try:
+        all_datasource = Query_Datasource()
+        result = []
+        if all_datasource is not None:
+            for item in all_datasource:
+                table_list = drill_get_tablelist_by_database(
+                    item.name, json.loads(item.config))
+                result = result + table_list
+        return CommonSuccess("查询成功...", result).Result()
+    except Exception as exception:
+        logger = g.request_logger
+        logger.log("获取所有表异常：{}".format(exception))
+        raise CommonException("获取所有表异常...",
+                              exception,
+                              ErrorCode.QUERY_DATASOURCE_FAILED)

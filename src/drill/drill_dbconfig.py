@@ -41,7 +41,7 @@ class MySQLDrillDBConfig(DrillDBConfig):
 
     db_type = "mysql"
 
-    def drill_config(config):
+    def drill_config(self, config):
         """
         {
             "ip": "192.168.7.250",
@@ -62,9 +62,9 @@ class MySQLDrillDBConfig(DrillDBConfig):
         return {
             "type": "jdbc",
             "driver": "com.mysql.jdbc.Driver",
-            "url": "jdbc:mysql://{}:{}/{}".format(config.ip, config.port, config.db_name),
-            "username": config.username,
-            "password": config.password,
+            "url": "jdbc:mysql://{}:{}/{}".format(config['ip'], config['port'], config['db_name']),
+            "username": config['username'],
+            "password": config['password'],
             "caseInsensitiveTableNames": False,
             "enabled": True
         }
@@ -74,7 +74,7 @@ class OracleDrillDBConfig(DrillDBConfig):
 
     db_type = "oracle"
 
-    def drill_config(config):
+    def drill_config(self, config):
         """
         {
             "ip": "192.168.7.250",
@@ -94,11 +94,11 @@ class OracleDrillDBConfig(DrillDBConfig):
             "type": "jdbc",
             "enabled": True,
             "driver": "oracle.jdbc.OracleDriver",
-            "url": "jdbc:oracle:thin:{}/{}@{}:{}/{}".format(config.username,
-                                                            config.password,
-                                                            config.ip,
-                                                            config.port,
-                                                            config.db_name),
+            "url": "jdbc:oracle:thin:{}/{}@{}:{}/{}".format(config['username'],
+                                                            config['password'],
+                                                            config['ip'],
+                                                            config['port'],
+                                                            config['db_name']),
         }
 
 
@@ -106,7 +106,7 @@ class SQLServerDrillDBConfig(DrillDBConfig):
 
     db_type = "sqlserver"
 
-    def drill_config(config):
+    def drill_config(self, config):
         """
         {
             "ip": "192.168.7.250",
@@ -128,9 +128,9 @@ class SQLServerDrillDBConfig(DrillDBConfig):
             "type": "jdbc",
             "enabled": True,
             "driver": "com.microsoft.sqlserver.jdbc.SQLServerDriver",
-            "url": "jdbc:sqlserver://{}:{};databaseName={}".format(config.ip, config.port, config.db_name),
-            "username": config.username,
-            "password": config.password,
+            "url": "jdbc:sqlserver://{}:{};databaseName={}".format(config['ip'], config['port'], config['db_name']),
+            "username": config['username'],
+            "password": config['password'],
         }
 
 
@@ -138,7 +138,7 @@ class PostgresqlDrillDBConfig(DrillDBConfig):
 
     db_type = "postgresql"
 
-    def drill_config(config):
+    def drill_config(self, config):
         """
         {
             "ip": "192.168.7.250",
@@ -160,9 +160,9 @@ class PostgresqlDrillDBConfig(DrillDBConfig):
             "type": "jdbc",
             "enabled": True,
             "driver": "org.postgresql.Driver",
-            "url": "jdbc:postgresql://{}:{}/{}".format(config.ip, config.port, config.db_name),
-            "username": config.username,
-            "password": config.password,
+            "url": "jdbc:postgresql://{}:{}/{}".format(config['ip'], config['port'], config['db_name']),
+            "username": config['username'],
+            "password": config['password'],
         }
 
 
@@ -171,6 +171,8 @@ DrillConfig = {
     "oracle": OracleDrillDBConfig(),
     "sqlserver": SQLServerDrillDBConfig(),
     "postgresql": PostgresqlDrillDBConfig()
+
+
 }
 
 
