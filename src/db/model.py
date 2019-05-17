@@ -49,6 +49,8 @@ def Insert_Datasource(name, type, config, test_sql, commit=True):
     @param {name} {type} {config} {test_sql}
     @return:
     '''
+    if test_sql is None:
+        test_sql = ""
     New_Datasource = Datasource(
         id=str(uuid1()),
         name=name,
@@ -67,6 +69,8 @@ def Update_Datasource(id, name, type, config, test_sql, commit=True):
     @param {id} {name} {type} {config} {test_sql}
     @return:
     '''
+    if test_sql is None:
+        test_sql = ""
     db.session.query(Datasource).filter(
         Datasource.id == id).update(
             {
@@ -170,9 +174,9 @@ def Insert_Dataset(name, commit=True):
 
     try:
         New_Dataset = Dataset(
-            id= id,
+            id=id,
             name=name
-            )
+        )
         db.session.add(New_Dataset)
         if commit:
             db.session.commit()
