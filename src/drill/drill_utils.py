@@ -1,7 +1,7 @@
 from pydrill.client import PyDrill
 from pydrill.transport import Transport
 from pydrill.client.result import ResultQuery, Result
-from pydrill.exceptions import ImproperlyConfigured, ConnectionError, ConnectionTimeout, TransportError
+from pydrill.exceptions import ImproperlyConfigured, ConnectionError, ConnectionTimeout, TransportError, QueryError
 
 import os
 from urllib.parse import urlencode
@@ -96,6 +96,33 @@ class PyDrillClient(PyDrill):
         }))
         return result
 
+    # 重写drill.query 加入 autoLimit
+    def query_limit(self, sql, limit = 1000, timeout=10):
+        """
+                Submit a query with limit and return results.
+
+                :param sql: string
+                :param timeout: int
+                :return: pydrill.client.ResultQuery
+                """
+        if not sql:
+            raise QueryError('No query passed to drill.')
+
+        result = ResultQuery(*self.perform_request(**{
+            'method': 'POST',
+            'url': '/query.json',
+            'body': {
+                "queryType": "SQL",
+                "query": sql,
+                "autoLimit": limit
+            },
+            'params': {
+                'request_timeout': timeout
+            }
+        }))
+
+        return result
+
 
 try:
     from config import Config
@@ -114,7 +141,7 @@ def drill_get(sql):
     if not drill.is_active():
         raise ImproperlyConfigured('Please run Drill first')
 
-    yelp_reviews = drill.query(sql)
+    yelp_reviews = drill.query_limit(sql, 1000)
     return yelp_reviews.rows
 
 
