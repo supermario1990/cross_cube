@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from ..decorator import log_request
-from ..errors import RequestError, ServerError, ConflictError, NotFoundError
+from ..errors import *
 from . import olap
 from flask import request, g, jsonify
 import json
@@ -48,11 +48,13 @@ def get_all_datasource():
         all_datasource = Query_Datasource()
         if all_datasource is None:
             all_datasource = []
-        return formatted_response(all_datasource)
+        return CommonSuccess("查询成功...", all_datasource).Result()
     except Exception as exception:
         logger = g.request_logger
         logger.log("获取所有数据源配置信息异常：{}".format(exception))
-        return formatted_response({"error": True, "message": "获取所有数据源配置信息异常..."})
+        raise CommonException("获取所有数据源配置信息异常...",
+                              exception,
+                              ErrorCode.QUERY_DATASOURCE_FAILED)
 
 
 @olap.route('/datasource/<id>/', methods=['GET', 'DELETE'])
@@ -104,11 +106,13 @@ def get_datasource_by_id(id):
     if request.method == 'GET':
         try:
             datasource = Select_Datasource_By_ID(id)
-            return formatted_response(datasource)
+            return CommonSuccess("查询成功...", datasource).Result()
         except Exception as exception:
             logger = g.request_logger
             logger.log("根据数据源ID获取数据源配置信息异常：{}-{}".format(id, exception))
-            return formatted_response({"error": True, "message": "根据数据源ID获取数据源配置信息异常..."})
+            raise CommonException("根据数据源ID获取数据源配置信息异常...",
+                                  exception,
+                                  ErrorCode.QUERY_DATASOURCE_FAILED)
 
     # 删除操作
     if request.method == 'DELETE':
@@ -116,8 +120,8 @@ def get_datasource_by_id(id):
             datasource = Select_Datasource_By_ID(id)
         except Exception as exception:
             logger = g.request_logger
-            logger.log("删除数据源配置异常：{}".format(exception))
-            return formatted_response({"error": True, "message": "根据{}未找到对应的数据源配置...".format(id)}), 404
+            logger.log("根据数据源ID删除数据源配置信息异常：{}-{}".format(id, exception))
+            raise NotFoundError("根据数据源ID删除数据源配置信息异常...", exception)
 
         # TODO 这么写有问题，这只能保证删除Drill的操作失败，不会删除数据库配置，
         # TODO 但是Drill删除后，执行删除数据源库配置异常，会导致Drill服务器上的配置已经删除，但是数据库中还存在对应的数据源配置。
@@ -125,12 +129,14 @@ def get_datasource_by_id(id):
             Delete_Datasource_By_ID(id, False)
             drill_storage_delete(datasource.name)
             db.session.commit()
-            return formatted_response({"message": "删除数据源{}配置成功...".format(id)})
+            return CommonSuccess("删除数据源{}配置成功...".format(id)).Result()
         except Exception as exception:
             db.session.rollback()
             logger = g.request_logger
             logger.log("删除Drill数据源异常：{}".format(exception))
-            return formatted_response({"error": True, "message": "删除数据源配置失败，此数据源配置服务器内部可能已经不能再使用！"})
+            raise CommonException("删除数据源配置{}失败，此数据源配置服务器内部可能已经不能再使用!".format(id),
+                                  exception,
+                                  ErrorCode.DELETE_DATASOURCE_FAILED)
 
 
 @olap.route('/datasource/', methods=['POST'])
@@ -190,31 +196,49 @@ def new_datasource():
         name = request_data["name"]
         type = request_data["type"]
         config = request_data["config"]
+        test_sql = request_data.get("test_sql")
+        if isinstance(config, str):
+            config = json.loads(config)
         if isinstance(config, object):
-            config = json.dumps(config)
-        test_sql = request_data.get("test_sql") or ""
-    except KeyError as exception:
-        raise RequestError("请求参数包含的键值不完整...", exception)
+            str_config = json.dumps(config)
+    except KeyError as keyerror:
+        raise RequestError("请求参数包含的键值不完整!", keyerror)
+    except Exception as exception:
+        raise RequestError("请求参数异常!", exception)
 
     try:
         datasource = Select_Datasource_By_Name(name)
-        if datasource != None:
-            raise ConflictError("数据源名称{}冲突".format(name))
     except Exception as exception:
-        logger = g.request_logger
-        logger.log("新增数据源配置异常：{}".format(exception))
-        return formatted_response({"error": True, "message": "{}".format(exception.message)})
+        pass
+    if datasource != None:
+        raise ConflictError("数据源名称{}冲突".format(name))
 
+    logger = g.request_logger
     try:
-        id = Insert_Datasource(name, type, config, test_sql, False)
-        drill_storage_update(name, config)
+        id = Insert_Datasource(name, type, str_config, test_sql, False)
+        drill_storage_update(type, name, config)
         db.session.commit()
-        return formatted_response({"id": id, "message": "新增数据源成功!"}), 201
+        return CommonSuccess("新增数据源成功!", {"id": id}).Result()
+    except ImproperlyConfigured as exception:
+        db.session.rollback()
+        logger.log("后台服务器配置错误或者启动异常: {}".format(exception))
+        raise CommonException("后台服务器配置错误或者启动异常!", exception,
+                              ErrorCode.CONNECT_DRILL_SERVER_FAILED)
+    except DatasourceConfigError as exception:
+        db.session.rollback()
+        logger.log("请求参数Config设置不正确: {}".format(exception))
+        raise CommonException("请求参数Config设置不正确!", exception,
+                              ErrorCode.ADD_DATASOURCE_CONFIG_FAILED)
+    except UnsupportedDBTypeError as exception:
+        db.session.rollback()
+        logger.log("不支持的数据源类型: {}".format(exception))
+        raise CommonException("不支持的数据源类型!", exception,
+                              ErrorCode.UNSUPPORTED_DATASOURCE_TYPE)
     except Exception as exception:
         db.session.rollback()
-        logger = g.request_logger
-        logger.log("新增数据源异常: {}".format(exception))
-        return formatted_response({"error": True, "message": "新增数据源异常!"}), 200
+        logger.log("新增数据源配置异常: {}".format(exception))
+        raise CommonException("新增数据源配置异常!", exception,
+                              ErrorCode.ADD_DATASOURCE_FAILED)
 
 
 @olap.route('/datasource/', methods=['PUT'])
@@ -272,26 +296,54 @@ def update_datasource():
         name = request_data["name"]
         type = request_data["type"]
         config = request_data["config"]
+        test_sql = request_data.get("test_sql")
+        if isinstance(config, str):
+            config = json.loads(config)
         if isinstance(config, object):
-            config = json.dumps(config)
-        test_sql = request_data.get("test_sql") or ""
-    except KeyError as exception:
-        raise RequestError("请求参数包含的键值不完整...", exception)
+            str_config = json.dumps(config)
+    except KeyError as keyerror:
+        raise RequestError("请求参数包含的键值不完整!", keyerror)
+    except Exception as exception:
+        raise RequestError("请求参数异常!", exception)
 
+    logger = g.request_logger
     try:
-        Update_Datasource(id, name, type, config, test_sql, False)
+        datasource = Select_Datasource_By_Name(name)
+        Update_Datasource(id, name, type, str_config, test_sql, False)
         drill_storage_update(name, config)
         db.session.commit()
-        return formatted_response({"id": id, "message": "新增或者修改数据源成功!"}), 200
+        return CommonSuccess("修改或者新增数据源成功!", {"id": id}).Result()
+    except ImproperlyConfigured as exception:
+        db.session.rollback()
+        logger.log("后台服务器配置错误或者启动异常: {}".format(exception))
+        raise CommonException("后台服务器配置错误或者启动异常!", exception,
+                              ErrorCode.CONNECT_DRILL_SERVER_FAILED)
+    except DatasourceConfigError as exception:
+        db.session.rollback()
+        logger.log("请求参数Config设置不正确: {}".format(exception))
+        raise CommonException("请求参数Config设置不正确!", exception,
+                              ErrorCode.ADD_DATASOURCE_CONFIG_FAILED)
+    except UnsupportedDBTypeError as exception:
+        db.session.rollback()
+        logger.log("不支持的数据源类型: {}".format(exception))
+        raise CommonException("不支持的数据源类型!", exception,
+                              ErrorCode.UNSUPPORTED_DATASOURCE_TYPE)
     except Exception as exception:
         try:
-            drill_storage_delete(name)
+            if datasource is None:
+                # 新增数据源配置，执行删除Drill对应的配置。
+                drill_storage_delete(name)
+                error_code = ErrorCode.ADD_DATASOURCE_FAILED
+            else:
+                # 修改数据源配置，执行恢复Drill对应的配置。
+                drill_storage_update(datasource.name,
+                                     json.loads(datasource.config))
+                error_code = ErrorCode.UPDATE_DATASOURCE_FAILED
         except Exception as exception:
             pass
         db.session.rollback()
-        logger = g.request_logger
-        logger.log("新增或者修改数据源异常: {}".format(exception))
-        return formatted_response({"error": True, "message": "新增或者修改数据源异常!"}), 200
+        logger.log("修改或者新增数据源配置异常: {}".format(exception))
+        raise CommonException("修改或者新增数据源配置异常!", exception, error_code)
 
 
 @olap.route('/datasource/test/<datasource_id>', methods=['GET', 'POST'])
