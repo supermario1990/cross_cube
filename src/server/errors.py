@@ -16,6 +16,8 @@ class ErrorCode(Enum):
     ADD_DATASOURCE_CONFIG_FAILED = 10004
     UNSUPPORTED_DATASOURCE_TYPE = 10005
     UPDATE_DATASOURCE_FAILED = 10006
+    TEST_DATASOURCE_FAILED = 10007
+    GET_DATASOURCE_TABLES_FAILED = 10008
 
 
 class ServerError(HTTPException):
@@ -112,6 +114,36 @@ class CommonException(ServerError):
     error_type = "request exception"
 
 
+class CommonFailed:
+
+    def __init__(self, message=None, error_code=None, result=None, **details):
+        self.message = message
+        self.result = result
+        self.details = details
+        self.error_code = error_code
+        if error_code is not None:
+            if isinstance(error_code, ErrorCode):
+                self.error_code = error_code.value
+
+    def Result(self):
+        status = {
+            "message": self.message,
+            "error": True,
+            "error_code": self.error_code,
+        }
+
+        if self.details:
+            status.update(self.details)
+
+        result = {}
+        result.update({"status": status})
+
+        if self.result is not None:
+            result.update({"result": self.result})
+
+        return formatted_response(result)
+
+
 class CommonSuccess:
 
     def __init__(self, message=None, result=None, **details):
@@ -121,9 +153,9 @@ class CommonSuccess:
 
     def Result(self):
         status = {
+            "message": self.message,
             "error": False,
             "error_code": 0,
-            "message": self.message,
         }
 
         if self.details:

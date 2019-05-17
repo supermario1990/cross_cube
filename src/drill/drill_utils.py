@@ -176,3 +176,10 @@ def drill_storage_delete(name):
 
     storage = drill.storage_delete(name)
     return storage.data
+
+
+def drill_test_dbstatus(type, name, config, test_sql):
+    return True
+
+def drill_get_dbtablelist(type, name, config):
+    return []

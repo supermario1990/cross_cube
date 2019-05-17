@@ -346,11 +346,64 @@ def update_datasource():
         raise CommonException("修改或者新增数据源配置异常!", exception, error_code)
 
 
-@olap.route('/datasource/test/<datasource_id>', methods=['GET', 'POST'])
-def test_datasource():
-    pass
+@olap.route('/datasource/test/<id>/', methods=['GET'])
+def test_datasource(id):
+    """
+    测试数据源连通性。
+    ---
+    tags:
+      - 测试数据源连通性。
+    parameters:
+      - name: id
+        type: string
+        required: true
+        description: 数据源ID
+    responses:
+      200:
+        description: 成功。
+    """
+    try:
+        datasource = Select_Datasource_By_ID(id)
+        result = drill_test_dbstatus(datasource.type, datasource.name,
+                                     datasource.config, datasource.test_sql)
+        if result:
+            return CommonSuccess("测试数据源连通性成功...").Result()
+        else:
+            return CommonFailed("测试数据源连通性失败...", ErrorCode.TEST_DATASOURCE_FAILED).Result()
+    except Exception as exception:
+        logger = g.request_logger
+        logger.log("测试数据源连通性失败：{}-{}".format(id, exception))
+        raise CommonException("测试数据源连通性失败...",
+                              exception,
+                              ErrorCode.TEST_DATASOURCE_FAILED)
 
 
-@olap.route('/datasource/table_list/<datasource_id>', methods=['GET', 'POST'])
-def query_datasource_table_list():
-    pass
+@olap.route('/datasource/table_list/<id>', methods=['GET'])
+def query_datasource_table_list(id):
+    """
+    根据数据源ID获取数据源下的所有表。
+    ---
+    tags:
+      - 根据数据源ID获取数据源下的所有表。
+    parameters:
+      - name: id
+        type: string
+        required: true
+        description: 数据源ID
+    responses:
+      200:
+        description: 成功。
+    """
+    try:
+        datasource = Select_Datasource_By_ID(id)
+        result = drill_get_dbtablelist(datasource.type, datasource.name, datasource.config)
+        if result:
+            return CommonSuccess("获取表信息成功...", result).Result()
+        else:
+            return CommonFailed("获取表信息失败...", ErrorCode.GET_DATASOURCE_TABLES_FAILED).Result()
+    except Exception as exception:
+        logger = g.request_logger
+        logger.log("获取数据源下表列表失败：{}-{}".format(id, exception))
+        raise CommonException("获取数据源下表列表失败...",
+                              exception,
+                              ErrorCode.GET_DATASOURCE_TABLES_FAILED)
