@@ -136,12 +136,12 @@ except Exception as exception:
                           trasport_class=PyTransport)
 
 
-def drill_get(sql):
+def drill_get(sql, limit=1000):
 
     if not drill.is_active():
         raise ImproperlyConfigured('Please run Drill first')
 
-    yelp_reviews = drill.query_limit(sql, 1000)
+    yelp_reviews = drill.query_limit(sql, limit)
     return yelp_reviews.rows
 
 
