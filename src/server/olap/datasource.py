@@ -396,7 +396,9 @@ def query_datasource_table_list(id):
     """
     try:
         datasource = Select_Datasource_By_ID(id)
-        result = drill_get_dbtablelist(datasource.type, datasource.name, datasource.config)
+        result = drill_get_tablelist_by_database(
+            datasource.name,
+            json.loads(datasource.config))
         if result:
             return CommonSuccess("获取表信息成功...", result).Result()
         else:

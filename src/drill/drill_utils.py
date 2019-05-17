@@ -181,5 +181,40 @@ def drill_storage_delete(name):
 def drill_test_dbstatus(type, name, config, test_sql):
     return True
 
-def drill_get_dbtablelist(type, name, config):
-    return []
+
+def drill_get_database_by_name(name):
+    """查询所有的数据库schema信息"""
+    query_sql = "select * from information_schema.schemata where schema_name like '{}%'".format(
+        name)
+    return drill_get(query_sql)
+
+
+def drill_get_tablelist_by_database(name, config):
+    """
+    根据数据源名称.数据库名称查询所有的表信息
+    [
+        {
+            "TABLE_CATALOG": "DRILL",
+            "TABLE_NAME": "datasource",
+            "TABLE_SCHEMA": "mysql_250.kros",
+            "TABLE_TYPE": "TABLE"
+        }
+    ]
+    """
+    db_name = config['db_name']
+    table_schema = "{}.{}".format(name, db_name)
+    query_sql = "SELECT * FROM INFORMATION_SCHEMA.`TABLES` WHERE TABLE_SCHEMA = '{}' ORDER BY TABLE_NAME DESC".format(table_schema)
+    data = drill_get(query_sql)
+    keys = ['TABLE_NAME', 'TABLE_SCHEMA', 'TABLE_TYPE']
+    result = []
+    for item in data:
+        result.append({ key:value for key,value in item.items() if key in keys })
+    return result
+
+
+def drill_get_table_info(name, config, table_name):
+    """查询表的结构信息"""
+    db_name = config['db_name']
+    table_schema = "{}.{}".format(name, db_name)
+    query_sql = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{}' AND TABLE_NAME = '{}'".format(table_schema, table_name)
+    return drill_get(query_sql)
