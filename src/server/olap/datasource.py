@@ -355,6 +355,7 @@ def test_datasource(id):
       - 测试数据源连通性。
     parameters:
       - name: id
+        in: path
         type: string
         required: true
         description: 数据源ID
@@ -387,6 +388,7 @@ def query_datasource_table_list(id):
       - 根据数据源ID获取数据源下的所有表。
     parameters:
       - name: id
+        in: path
         type: string
         required: true
         description: 数据源ID
