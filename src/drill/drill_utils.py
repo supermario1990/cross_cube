@@ -98,7 +98,7 @@ class PyDrillClient(PyDrill):
         return result
 
     # 重写drill.query 加入 autoLimit
-    def query_limit(self, sql, limit=1000, timeout=10):
+    def query_limit(self, sql, limit = 1000, timeout=10):
         """
                 Submit a query with limit and return results.
 
@@ -143,8 +143,6 @@ class DrillException(ImproperlyConfigured):
     def __str__(self):
         return repr('config error or bi server status error...')
 
-
-def drill_get(sql):
 def drill_get(sql, limit=1000):
 
     if not drill.is_active():
