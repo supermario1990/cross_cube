@@ -4,6 +4,7 @@ from pydrill.client.result import ResultQuery, Result
 from pydrill.exceptions import ImproperlyConfigured, ConnectionError, ConnectionTimeout, TransportError, QueryError
 
 import os
+import json
 from urllib.parse import urlencode
 from .drill_dbconfig import get_support_drill_config, UnsupportedDBTypeError, DatasourceConfigError
 
@@ -98,7 +99,7 @@ class PyDrillClient(PyDrill):
         return result
 
     # 重写drill.query 加入 autoLimit
-    def query_limit(self, sql, limit = 1000, timeout=10):
+    def query_limit(self, sql, limit=1000, timeout=10):
         """
                 Submit a query with limit and return results.
 
@@ -144,6 +145,13 @@ class DrillException(ImproperlyConfigured):
         return repr('config error or bi server status error...')
 
 
+class DrillUpdateStorageException(Exception):
+    """更新数据源异常"""
+
+    def __str__(self):
+        return repr('update storage exception...')
+
+
 def drill_get(sql, limit=1000):
 
     if not drill.is_active():
@@ -165,7 +173,10 @@ def drill_storage_update(type, name, config):
     if not drill_config.check_config(config):
         raise DatasourceConfigError()
 
-    storage = drill.storage_create(name, config)
+    trans_config = drill_config.drill_config(config)
+    storage = drill.storage_create(name, json.dumps(trans_config))
+    if storage.data['result'] != 'Success':
+        raise DrillUpdateStorageException()
     return storage.data
 
 
@@ -203,12 +214,14 @@ def drill_get_tablelist_by_database(name, config):
     """
     db_name = config['db_name']
     table_schema = "{}.{}".format(name, db_name)
-    query_sql = "SELECT * FROM INFORMATION_SCHEMA.`TABLES` WHERE TABLE_SCHEMA = '{}' ORDER BY TABLE_NAME DESC".format(table_schema)
+    query_sql = "SELECT * FROM INFORMATION_SCHEMA.`TABLES` WHERE TABLE_SCHEMA = '{}' ORDER BY TABLE_NAME DESC".format(
+        table_schema)
     data = drill_get(query_sql)
     keys = ['TABLE_NAME', 'TABLE_SCHEMA', 'TABLE_TYPE']
     result = []
     for item in data:
-        result.append({ key:value for key,value in item.items() if key in keys })
+        result.append(
+            {key: value for key, value in item.items() if key in keys})
     return result
 
 
@@ -216,5 +229,6 @@ def drill_get_table_info(name, config, table_name):
     """查询表的结构信息"""
     db_name = config['db_name']
     table_schema = "{}.{}".format(name, db_name)
-    query_sql = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{}' AND TABLE_NAME = '{}'".format(table_schema, table_name)
+    query_sql = "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '{}' AND TABLE_NAME = '{}'".format(
+        table_schema, table_name)
     return drill_get(query_sql)
