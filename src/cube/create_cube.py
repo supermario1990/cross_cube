@@ -65,7 +65,7 @@ def create_cube(fact_table, lookups = None, name = None):
         print(sql)
         rs = drill_get(sql)
 
-        dims, measures = get_dims_measures(rs)
+        dims, measures = get_dims_measures(json.loads(rs)['rows'])
         print('dims:', dims)
         print('measures', measures)
         item_dim = {}

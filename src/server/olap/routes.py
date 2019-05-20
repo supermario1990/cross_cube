@@ -4,6 +4,7 @@ from flask import request, jsonify, json, Response
 from sqlalchemy.orm.exc import *
 from cube.create_cube import *
 from cube.model_parse import *
+from drill import drill_utils
 
 
 def make_resp(data=None, msg=None, success=True):
@@ -87,7 +88,7 @@ def query_cude(id):
     """
     根据cude查询数据
     :param id:
-    :return:
+    :return: 数据集
     """
     try:
         dims = request.form.get('dims')
@@ -98,9 +99,11 @@ def query_cude(id):
         model = str(rs.cube, encoding='utf-8')
         model = json.loads(model)
         sql = parse(model, dims, measures, filter)
-        return sql
+        cellset = json.loads(drill_utils.drill_get(sql))
+        cellset['sql'] = sql
+        return make_resp(data=cellset, msg='ok')
     except Exception as e:
-        return str(e)
+        return make_resp(msg=str(e), success=False)
 
 @olap.route('/test')
 def test():

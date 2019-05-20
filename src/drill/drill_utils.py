@@ -158,7 +158,10 @@ def drill_get(sql, limit=1000):
         raise DrillException()
 
     yelp_reviews = drill.query_limit(sql, limit)
-    return yelp_reviews.rows
+
+    if yelp_reviews.response.status_code != 200:
+        raise Exception(yelp_reviews.response.reason)
+    return yelp_reviews.response.text
 
 
 def drill_storage_update(type, name, config):
