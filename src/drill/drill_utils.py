@@ -143,6 +143,7 @@ class DrillException(ImproperlyConfigured):
     def __str__(self):
         return repr('config error or bi server status error...')
 
+
 def drill_get(sql, limit=1000):
 
     if not drill.is_active():

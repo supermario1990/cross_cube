@@ -26,19 +26,23 @@ def create_dataset(name):
     """
     if request.method == 'POST':
         try:
-            fact_table = request.form['fact_table']
-            lookups = request.form.get('lookups')
+            try:
+                Select_Dataset_By_Name(name=name)
+                return make_resp(msg='数据集[{}]已经存在！'.format(name), success=False)
+            except NoResultFound as e:
+                fact_table = request.form['fact_table']
+                lookups = request.form.get('lookups')
 
-            # 创建立方体
-            cube_model = create_cube(fact_table, lookups, name)
-            cube_json = json.dumps(cube_model)
+                # 创建立方体
+                cube_model = create_cube(fact_table, lookups, name)
+                cube_json = json.dumps(cube_model)
 
-            id = str(uuid1())
-            dataset = Dataset(id=id, name=name)
-            cube = Cubes(name=name, name_alias=name, dataset_uuid=id, cube=bytes(cube_json, encoding='utf-8'))
-            Inserts(dataset, cube)
+                id = str(uuid1())
+                dataset = Dataset(id=id, name=name)
+                cube = Cubes(name=name, name_alias=name, dataset_uuid=id, cube=bytes(cube_json, encoding='utf-8'))
+                Inserts(dataset, cube)
 
-            return make_resp(data={'cube':cube_model}, msg='ok')
+                return make_resp(data={'cube':cube_model}, msg='ok')
         except Exception as e:
             return make_resp(msg=str(e), success=False)
 
