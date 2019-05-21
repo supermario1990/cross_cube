@@ -15,10 +15,6 @@ def make_resp(data=None, msg=None, success=True):
     return jsonify(rs)
 
 
-@olap.route('/')
-def index():
-    return render_template('index.html', title='KROS')
-
 @olap.route('/dataset/<name>', methods=['POST', 'DELETE', 'PUT'])
 def create_dataset(name):
     """
@@ -40,10 +36,11 @@ def create_dataset(name):
 
                 id = str(uuid1())
                 dataset = Dataset(id=id, name=name)
-                cube = Cubes(name=name, name_alias=name, dataset_uuid=id, cube=bytes(cube_json, encoding='utf-8'))
+                cube = Cubes(name=name, name_alias=name, dataset_uuid=id,
+                             cube=bytes(cube_json, encoding='utf-8'))
                 Inserts(dataset, cube)
 
-                return make_resp(data={'cube':cube_model}, msg='ok')
+                return make_resp(data={'cube': cube_model}, msg='ok')
         except Exception as e:
             return make_resp(msg=str(e), success=False)
 
@@ -71,9 +68,10 @@ def create_dataset(name):
             Update_Dataset(id, name, commit=False)
             cube_model = create_cube(fact_table, lookups, name)
             cube_json = json.dumps(cube_model)
-            Update_Cube(name, name, dataset_uuid=id, cube=bytes(cube_json, encoding='utf-8'), commit=True)
+            Update_Cube(name, name, dataset_uuid=id, cube=bytes(
+                cube_json, encoding='utf-8'), commit=True)
 
-            return make_resp(data={'cube':cube_model}, msg='ok')
+            return make_resp(data={'cube': cube_model}, msg='ok')
         except NoResultFound as e:
             return make_resp(msg='数据集不存在，请先创建数据集.' + str(e), success=False)
         except MultipleResultsFound as e:
@@ -82,6 +80,7 @@ def create_dataset(name):
             return make_resp(msg='参数错误，' + str(e), success=False)
         except Exception as e:
             return make_resp(msg=str(e), success=False)
+
 
 @olap.route('/cube/<id>', methods=['POST'])
 def query_cude(id):
@@ -105,6 +104,7 @@ def query_cude(id):
     except Exception as e:
         return make_resp(msg=str(e), success=False)
 
+
 @olap.route('/test')
 def test():
     """
@@ -115,20 +115,19 @@ def test():
         id = str(uuid1())
         dataset = Dataset(id=id, name='a1')
         cube = Cubes(name='a1', name_alias='a1', dataset_uuid=id, cube=bytes("{}", encoding='utf-8'),
-              extends=bytes("{}", encoding='utf-8'))
+                     extends=bytes("{}", encoding='utf-8'))
         Inserts(dataset, cube)
-
 
         id = str(uuid1())
         dataset = Dataset(id=id, name='a2')
         cube = Cubes(name='a2', name_alias='a2', dataset_uuid=id, cube=bytes("{}", encoding='utf-8'),
-              extends=bytes("{}", encoding='utf-8'))
+                     extends=bytes("{}", encoding='utf-8'))
         Inserts(dataset, cube)
 
         id = str(uuid1())
         dataset = Dataset(id=id, name='a3')
         cube = Cubes(name='a3', name_alias='a3', dataset_uuid=id, cube=bytes("{}", encoding='utf-8'),
-              extends=bytes("{}", encoding='utf-8'))
+                     extends=bytes("{}", encoding='utf-8'))
         Inserts(dataset, cube)
 
         return "ok"

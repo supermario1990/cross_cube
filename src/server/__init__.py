@@ -35,6 +35,9 @@ def create_app(config_name):
     db.init_app(app)
     migrate.init_app(app, db)
 
+    from .index import main
+    app.register_blueprint(main)
+
     from .olap import olap
     app.register_blueprint(olap, config=current_config, url_prefix='/olap')
 
