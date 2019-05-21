@@ -10,7 +10,7 @@ main = Blueprint('main', __name__)
 @main.route('/')
 @main.route('/index')
 def index():
-    return render_template('index.html', title='KROS')
+    return render_template('index.html', title='KROS', version=get_version())
 
 
 @main.route('/version')
