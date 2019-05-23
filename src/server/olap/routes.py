@@ -25,6 +25,55 @@ def get_tb_alias(fact_tb, lookups):
     return tb_alias
 
 
+def param_check(*args, **kwargs):
+    for i in args:
+        if i:
+            if len(i) == 0:
+                raise ValueError('长度不能为0')
+    for k, v in kwargs.items():
+        if k == 'fact_table':
+            if v:
+                if len(v.split('.')) != 2:
+                    raise ValueError(k + ' 参数格式错误')
+        if k == 'lookups':
+            if v:
+                try:
+                    lookups = json.loads(v)
+                    if  not 'lookups' in lookups.keys():
+                        raise ValueError('缺少lookups关键字')
+                    param_list = lookups['lookups']
+                    for i in param_list:
+                        val1 = ['table', 'alias', 'join']
+                        for val in val1:
+                            if not val in i.keys():
+                                raise ValueError('缺少[{}]关键字'.format(v))
+
+                        val2 = ['type', 'primary_key', 'foreign_key']
+                        for val in val2:
+                            if not val in i['join'].keys():
+                                raise ValueError('缺少[{}]关键字'.format(v))
+                except ValueError as e:
+                    raise e
+                except Exception as e:
+                    raise ValueError('参数格式错误，不合法json格式.' + str(e))
+
+        if k in ['dims', 'measures', 'filter']:
+            if v:
+                try:
+                    j = json.loads(v)
+                    for val in j.values():
+                        val_list = ['table', 'alias', 'columns']
+                        for i in val_list:
+                            for d in val:
+                                if not i in d.keys():
+                                    raise ValueError('缺少[{}]关键字'.format(i))
+
+                except ValueError as e:
+                    raise e
+                except Exception as e:
+                    raise ValueError('参数格式错误，不合法json格式.' + str(e))
+
+
 def update_dims_measuers(dims, measures, model, fact_tb, lookups):
     tb_alias = get_tb_alias(fact_tb, lookups)
     if dims:
@@ -53,12 +102,24 @@ def update_dims_measuers(dims, measures, model, fact_tb, lookups):
 def index():
     return render_template('index.html', title='KROS')
 
-@olap.route('/dataset/<name>', methods=['POST', 'DELETE', 'PUT'])
+@olap.route('/dataset/<name>', methods=['GET','POST', 'DELETE', 'PUT'])
 def create_dataset(name):
     """
     创建数据集
     :return:
     """
+    if request.method == 'GET':
+        try:
+            dataset = Select_Dataset_By_Name(name=name)
+            cube = Select_Cube_By_ID(dataset.id)
+            cube_json = str(cube.cube, encoding='utf-8')
+            cube_model = json.loads(cube_json)
+            return make_resp(data={'cube': cube_model}, msg='ok')
+        except NoResultFound as e:
+            return make_resp(msg='数据集不存在.' + str(e), success=False)
+        except Exception as e:
+            return make_resp(msg=str(e), success=False)
+
     if request.method == 'POST':
         try:
             try:
@@ -68,6 +129,7 @@ def create_dataset(name):
                 fact_table = request.form['fact_table']
                 lookups = request.form.get('lookups')
 
+                param_check(fact_table=fact_table, lookups=lookups)
                 # 创建立方体
                 cube_model = create_cube(fact_table, lookups, name)
                 cube_json = json.dumps(cube_model)
@@ -99,6 +161,8 @@ def create_dataset(name):
             lookups = request.form.get('lookups')
             dims_str = request.form.get('dims')
             measures_str = request.form.get('measures')
+
+            param_check(rename, fact_table=fact_table, lookups=lookups, dims=dims_str, measures=measures_str)
 
             dataset = Select_Dataset_By_Name(name=name)
             id = dataset.id
@@ -137,6 +201,7 @@ def query_cude(id):
             measures = request.form.get('measures')
             filter = request.form.get('filter')
 
+            param_check(dims=dims, measures=measures, filter=filter)
             rs = Select_Cube_By_ID(id)
             model = str(rs.cube, encoding='utf-8')
             model = json.loads(model)

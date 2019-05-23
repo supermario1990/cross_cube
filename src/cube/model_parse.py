@@ -114,7 +114,8 @@ def generate_filter(filter):
 def get_full_table(table):
     ds = table.split('.')[0]
     rs = Select_Datasource_By_Name(ds)
-    return '.'.join((rs.name, json.loads(rs.config)['db_name'])) + '.'+ table.split('.')[1]
+    db_name = json.loads(rs.config)['db_name']
+    return '.'.join((rs.name, db_name)) + '.'+ table.split('.')[1]
 
 
 @pysnooper.snoop()
@@ -145,10 +146,13 @@ def parse(model, dims = None, measures = None, filters = None):
             join_sql = join_sql + " inner join "
         elif i['join']['type'] == 'left':
             join_sql = join_sql + " left join "
-        else:
+        elif i['join']['type'] == 'right':
             join_sql = join_sql + " right join "
+        else:
+            raise ValueError('不支持的连接方式:'+ i['join']['type'])
 
-        join_sql = join_sql + get_full_table(i['table']) + ' ' + i['alias'] + ' on ' +\
+        table_name = get_full_table(i['table'])
+        join_sql = join_sql + table_name + ' ' + i['alias'] + ' on ' +\
                    i['join']['foreign_key'] + ' = ' + i['join']['primary_key']
 
 
