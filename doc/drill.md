@@ -22,3 +22,4 @@ ORDER BY TABLE_NAME DESC;
 
 1. pydrill 使用 drill.query 时，sql最后不能带分号，否者报错
 2. 
+

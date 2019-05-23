@@ -1,10 +1,11 @@
 # 生成立方体model
 
 from db.model import *
-import json
 import uuid
 import time
 from drill.drill_utils import *
+import pysnooper
+
 
 def all_tbs(fact_table, lookups_list):
     tbs = []
@@ -43,6 +44,7 @@ def get_dims_measures(columns):
     return dims, measures
 
 
+@pysnooper.snoop()
 def create_cube(fact_table, lookups = None, name = None):
     if not fact_table:
         return "fact_table param required!"

@@ -7,6 +7,8 @@ import os
 import json
 from urllib.parse import urlencode
 from .drill_dbconfig import get_support_drill_config, UnsupportedDBTypeError, DatasourceConfigError
+from cacheout import Cache
+cache = Cache()
 
 
 class PyTransport(Transport):
@@ -152,6 +154,7 @@ class DrillUpdateStorageException(Exception):
         return repr('update storage exception...')
 
 
+@cache.memoize(ttl=300)
 def drill_get(sql, limit=1000):
 
     if not drill.is_active():

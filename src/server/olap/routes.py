@@ -14,6 +14,40 @@ def make_resp(data=None, msg=None, success=True):
     rs['success'] = success
     return jsonify(rs)
 
+def get_tb_alias(fact_tb, lookups):
+    tb_alias = {}
+    tb_alias[fact_tb] = 't_0'
+    if lookups:
+        for i in json.loads(lookups)['lookups']:
+            index = 1
+            tb_alias[i['table']] = 't_' + str(index)
+            index = index + 1
+    return tb_alias
+
+
+def update_dims_measuers(dims, measures, model, fact_tb, lookups):
+    tb_alias = get_tb_alias(fact_tb, lookups)
+    if dims:
+        for i in json.loads(dims)['dimensions']:
+            alias = tb_alias[i['table']]
+            index = 0
+            for j in model['dimensions']:
+                if alias == j['table']:
+                    j['columns'] = i['columns']
+                    model['dimensions'][index] = j
+                index = index + 1
+    if measures:
+        for i in json.loads(measures)['measures']:
+            alias = tb_alias[i['table']]
+            index = 0
+            for j in model['measures']:
+                if alias == j['table']:
+                    j['columns'] = i['columns']
+                    model['measures'][index] = j
+                index = index + 1
+
+    return model
+
 
 @olap.route('/')
 def index():
@@ -63,6 +97,8 @@ def create_dataset(name):
             rename = request.form.get('rename')
             fact_table = request.form['fact_table']
             lookups = request.form.get('lookups')
+            dims_str = request.form.get('dims')
+            measures_str = request.form.get('measures')
 
             dataset = Select_Dataset_By_Name(name=name)
             id = dataset.id
@@ -70,6 +106,9 @@ def create_dataset(name):
 
             Update_Dataset(id, name, commit=False)
             cube_model = create_cube(fact_table, lookups, name)
+
+            cube_model = update_dims_measuers(dims_str, measures_str, cube_model, fact_table, lookups)
+
             cube_json = json.dumps(cube_model)
             Update_Cube(name, name, dataset_uuid=id, cube=bytes(cube_json, encoding='utf-8'), commit=True)
 
@@ -83,6 +122,8 @@ def create_dataset(name):
         except Exception as e:
             return make_resp(msg=str(e), success=False)
 
+
+
 @olap.route('/cube/<id>', methods=['POST'])
 def query_cude(id):
     """
@@ -90,20 +131,22 @@ def query_cude(id):
     :param id:
     :return: 数据集
     """
-    try:
-        dims = request.form.get('dims')
-        measures = request.form.get('measures')
-        filter = request.form.get('filter')
+    if request.method == 'POST':
+        try:
+            dims = request.form.get('dims')
+            measures = request.form.get('measures')
+            filter = request.form.get('filter')
 
-        rs = Select_Cube_By_ID(id)
-        model = str(rs.cube, encoding='utf-8')
-        model = json.loads(model)
-        sql = parse(model, dims, measures, filter)
-        cellset = json.loads(drill_utils.drill_get(sql))
-        cellset['sql'] = sql
-        return make_resp(data=cellset, msg='ok')
-    except Exception as e:
-        return make_resp(msg=str(e), success=False)
+            rs = Select_Cube_By_ID(id)
+            model = str(rs.cube, encoding='utf-8')
+            model = json.loads(model)
+            sql = parse(model, dims, measures, filter)
+            cellset = json.loads(drill_utils.drill_get(sql))
+            cellset['sql'] = sql
+            return make_resp(data=cellset, msg='ok')
+        except Exception as e:
+            return make_resp(msg=str(e), success=False)
+
 
 @olap.route('/test')
 def test():

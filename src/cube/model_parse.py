@@ -2,6 +2,7 @@
 
 import json
 from db.model import *
+import pysnooper
 
 # dims: {"dimensions":[{"table": "mysql_250.sales", "alias":"t_0", "columns":[{"name": "product_id", "alias": "product_id"}]},
 #                     {"table": "mysql_250.dates", "alias":"t_1", "columns":[{"name": "date_year", "alias": "YEAR"}]}]}
@@ -115,6 +116,8 @@ def get_full_table(table):
     rs = Select_Datasource_By_Name(ds)
     return '.'.join((rs.name, json.loads(rs.config)['db_name'])) + '.'+ table.split('.')[1]
 
+
+@pysnooper.snoop()
 def parse(model, dims = None, measures = None, filters = None):
     if not model:
         return 'no model!'
