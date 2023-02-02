@@ -53,5 +53,5 @@ sphinxcontrib-serializinghtml==1.1.3
 SQLAlchemy==1.3.2
 virtualenv==16.4.3
 virtualenvwrapper-win==1.2.5
-Werkzeug==0.15.3
+Werkzeug==0.15.5
 wrapt==1.11.1
